@@ -46,27 +46,25 @@
         "Xbuild": "./dist/index.js"
     },
     "scripts": {
-        "dev": "nodemon src/index.ts",
+        "dev": "xBuild -w",
         "lint": "tsc -noEmit && eslint . -c ./eslint.config.mjs",
-        "build": "node --no-warnings esbuild.js",
-        "postbuild": "tsc --declaration --emitDeclarationOnly && tsc-alias",
+        "build": "xBuild",
         "test": "jest",
         "test:coverage": "jest --coverage"
     },
     "devDependencies": {
         "@swc/jest": "^0.2.36",
-        "@types/jest": "^29.5.12",
         "@types/node": "^22.2.0",
-        "eslint": "^9.9.0",
-        "eslint-plugin-jsdoc": "^50.2.1",
+        "@types/jest": "^29.5.12",
+        "@remotex-labs/xbuild": "^0.0.1-beta.4",
         "jest": "^29.7.0",
-        "nodemon": "^3.1.4",
-        "tsc-alias": "^1.8.10",
+        "eslint": "^9.9.0",
         "typescript": "^5.5.4",
-        "typescript-eslint": "^8.1.0"
+        "typescript-eslint": "^8.1.0",
+        "eslint-plugin-jsdoc": "^50.2.1"
     },
     "dependencies": {
-        "esbuild": "^0.23.1",
-        "yargs": "^17.7.2"
+        "yargs": "^17.7.2",
+        "esbuild": "^0.23.1"
     }
 }

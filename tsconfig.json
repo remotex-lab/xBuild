@@ -13,6 +13,7 @@
         "esModuleInterop": false,
         "moduleDetection": "force",
         "moduleResolution": "node",
+        "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
         "lib": [

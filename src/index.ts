@@ -1,40 +1,49 @@
 #!/usr/bin/env node
 
 /**
- * Export types
+ * Import will remove at compile time
  */
 
 import type { ArgvInterface } from '@components/interfaces/argv.interface';
-
-export type * from '@components/interfaces/configuration.interface';
 
 /**
  * Imports
  */
 
 import { argvParser } from '@components/argv.component';
+import { errorHandler } from '@providers/error.provider';
+import { BuildDirective } from '@directives/build.directive';
 import { getConfiguration } from '@components/configuration.component';
-import { BuildDirective } from './directives/build.directive';
+
+/**
+ * Clean cli
+ */
+
+process.stdout.write('\x1Bc');
 
 /**
  * Main run
  */
 
 async function run() {
-    let config;
     const cli = argvParser(process.argv);
     const args = <ArgvInterface> cli.argv;
 
+
     try {
-        config = await getConfiguration(args.config, cli);
+        const config = await getConfiguration(args.config, cli);
         const build = new BuildDirective(config);
         if (args.dev) {
             return await build.dev();
         }
 
+        if(args.serve) {
+            return await build.serve();
+        }
+
         await build.run();
     } catch (error) {
-        console.log(error);
+        errorHandler(error);
     }
 }
 

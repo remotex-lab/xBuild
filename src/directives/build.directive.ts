@@ -2,56 +2,133 @@
  * Import will remove at compile time
  */
 
-import { build, type BuildContext, context, type SameShape } from 'esbuild';
-import type { ConfigurationInterface } from '@components/interfaces/configuration.interface';
+import type { ParsedCommandLine } from 'typescript';
+import type { BuildContext, SameShape } from 'esbuild';
+import type { ChildProcessWithoutNullStreams } from 'child_process';
+import type { ConfigurationInterface } from '@providers/interfaces/configuration.interface';
 
 /**
  * Imports
  */
-import { extname, join, normalize, sep } from 'path';
-import { defPlugin } from '@plugins/ifdef.plugin';
-import { analyzeDependencies } from '@core/services/transpiler.service';
-import { createProgram, flattenDiagnosticMessageText, getPreEmitDiagnostics } from 'typescript';
-import { readTsConfig } from '@components/configuration.component';
+
 import { cwd } from 'process';
+import { build, context } from 'esbuild';
+import { extname, join, normalize, sep } from 'path';
+import { contentPlugin } from '@plugins/content.plugin';
+import { rebuildPlugin } from '@plugins/rebuild.plugin';
+import { analyzeDependencies } from '@services/transpiler.service';
+import { TypescriptDirective } from '@directives/typescript.directive';
+import { getTsConfiguration } from '@components/configuration.component';
+import { spawn } from '@providers/process.provider';
+import { tmpdir } from 'os';
+import * as http from 'node:http';
 
-function getFilenameWithoutExtension(filePath: string): string {
-    // Normalize and split the path into segments
-    const parts = normalize(filePath).split(sep);
-
-    // Remove the first directory part
-    const filePart = parts.slice(1).join(sep);
-
-    // Remove the extension from the base name
-    return filePart.slice(0, -extname(filePart).length);
-}
+/**
+ * Manages the build process for a TypeScript project using esbuild.
+ *
+ * The `BuildDirective` class provides methods to handle different build scenarios,
+ * such as development, serving, and general builds. It integrates with the `TypescriptDirective`
+ * class for type checking and declaration file generation.
+ */
 
 export class BuildDirective {
+    /**
+     * Manages TypeScript compilation, type checking, and declaration file generation.
+     */
+
+    private typescriptDirective: TypescriptDirective;
+
+    /**
+     * Creates an instance of BuildDirective.
+     *
+     * Initializes the `TypescriptDirective` instance using the TypeScript configuration
+     * and output directory specified in the provided configuration.
+     *
+     * @param config - The build configuration.
+     */
+
     constructor(private config: ConfigurationInterface) {
+        this.typescriptDirective = new TypescriptDirective(this.tsConfig, <string> this.config.esbuild.outdir);
+        // console.log(this.typescriptDirective.alias);
+        this.setDefaultPlugin();
     }
 
-    async dev(): Promise<void> {
-        try {
-            this.typescriptChecker();
-            const result = await this.build();
+    /**
+     * Gets the parsed TypeScript configuration from the specified file.
+     *
+     * @returns The parsed TypeScript configuration.
+     */
 
+    get tsConfig(): ParsedCommandLine {
+        return getTsConfiguration(join(cwd(), this.config.esbuild.tsconfig ?? 'tsconfig.json'));
+    }
+
+    /**
+     * Runs the development build process.
+     *
+     * Configures esbuild for bundling without writing output files, runs type checking or
+     * declaration generation if required, and starts the watch mode for live development.
+     *
+     * @throws Error If there is an issue during the build process.
+     */
+
+    async dev(): Promise<void> {
+        console.log('xxx');
+        this.config.esbuild.write = true;
+        this.config.esbuild.bundle = true;
+        this.config.esbuild.minify = true;
+        this.config.esbuild.outdir = join(tmpdir(), 'xBuilds');
+
+        if (!this.config.noTypeChecker || this.config.declaration)
+            this.typescriptDirective.runTypeCheckerOrEmitDeclaration(this.config.declaration);
+
+        try {
+            const result = await this.build();
             await (<BuildContext> result).watch();
         } catch (error: any) {
             console.error(error.message);
         }
     }
 
+    /**
+     * Runs the serve build process.
+     *
+     * Configures esbuild for bundling without writing output files, and runs type checking or
+     * declaration generation if required.
+     *
+     * @throws Error If there is an issue during the build process.
+     */
+
     async serve(): Promise<void> {
         try {
-            this.typescriptChecker();
+            if (!this.config.noTypeChecker || this.config.declaration)
+                this.typescriptDirective.runTypeCheckerOrEmitDeclaration(this.config.declaration);
+
+            const result = await this.build();
+            const serveConfig: any = { ...this.config.serve, port: (this.config.serve.port ?? 3000) - 1 };
+            delete serveConfig.active;
+
+            await (<BuildContext> result).serve(serveConfig);
         } catch (error: any) {
             console.error(error.message);
         }
     }
 
+    /**
+     * Runs the build process based on the configuration.
+     *
+     * Executes type checking or declaration generation if required and performs the build
+     * using esbuild. If watch mode is enabled, it starts watching for file changes.
+     *
+     * @throws Error If there is an issue during the build process.
+     */
+
     async run(): Promise<void> {
+        console.log('xxx2');
+        if (!this.config.noTypeChecker || this.config.declaration)
+            this.typescriptDirective.runTypeCheckerOrEmitDeclaration(this.config.declaration);
+
         try {
-            this.typescriptChecker();
             const result = await this.build();
 
             if (this.config.watch) {
@@ -62,125 +139,85 @@ export class BuildDirective {
         }
     }
 
-    private typescriptChecker() {
-        try {
-            if (!this.config.noTypeChecker) {
-                this.runTypeChecker();
-            }
-
-            if (this.config.declaration) {
-                this.generateDeclaration();
-            }
-
-        } catch (e) {
-            if (!this.config.buildOnError) {
-                throw e;
-            }
-        }
-    }
+    /**
+     * Builds the project using esbuild based on the current configuration.
+     *
+     * Adjusts entry points if necessary, and returns a build context if watch mode is enabled,
+     * or performs a one-time build.
+     *
+     * @returns A promise that resolves to the build context or result of the build operation.
+     */
 
     private async build(): Promise<BuildContext | SameShape<unknown, unknown>> {
         const config = this.config.esbuild;
-
-        if (this.config.defines) {
-            config.define = config.define ?? {};
-            for (const key in this.config.defines) {
-                if (this.config.defines.hasOwnProperty(key)) {
-                    config.define[key] = JSON.stringify(this.config.defines[key]);
-                }
-            }
-        }
-
-        if (config.define && Object.keys(config.define).length > 0) {
-            config.plugins = config.plugins ?? [];
-            config.plugins.unshift(defPlugin({ defines: config.define }));
-        }
-
-        if (this.config.watch || this.config.dev || this.config.serve.active) {
-            return await context(config);
-        }
 
         if (!this.config.esbuild.bundle) {
             const entryFile: Array<string> = Array.isArray(this.config.esbuild.entryPoints)
                 ? <Array<string>> config.entryPoints
                 : Object.values(config.entryPoints as { [key: string]: string });
 
-            const x = await analyzeDependencies(entryFile[0], this.config.esbuild.platform);
-            const dd = Object.values<string>(<Array<string>>this.config.esbuild.entryPoints);
+            const meta = await analyzeDependencies(entryFile[0], this.config.esbuild.platform);
+            const entryPoints = Object.values<string>(<Array<string>> this.config.esbuild.entryPoints);
 
-            for (const item of Object.keys(x.inputs)) {
-                if (!dd.includes(item)) {
-                    (<any>config.entryPoints)[getFilenameWithoutExtension(item)] = item;
+            for (const file in meta.inputs) {
+                if (!entryPoints.includes(file)) {
+                    const key = this.getFilenameWithoutExtension(file);
+                    (<{ [key: string]: string }> config.entryPoints)[key] = file;
                 }
             }
+        }
+
+        if (this.config.watch || this.config.dev || this.config.serve.active) {
+            return await context(config);
         }
 
         return await build(config);
     }
 
     /**
-     * Generates TypeScript declaration file (.d.ts) for the given entry file.
+     * Gets the filename without its extension from a file path.
+     *
+     * Normalizes the file path, removes the directory part, and strips the file extension.
+     *
+     * @param filePath - The full path to the file.
+     * @returns The filename without its extension.
      */
 
-    private generateDeclaration() {
-        const tsconfig = readTsConfig(join(cwd(), this.config.esbuild.tsconfig ?? 'tsconfig'));
-        const program = createProgram(tsconfig.fileNames, {
-            ...tsconfig.options,
-            declaration: true,
-            skipLibCheck: true,
-            emitDeclarationOnly: true,
-            outDir: this.config.esbuild.outdir,
-            baseUrl: cwd()
-        });
+    private getFilenameWithoutExtension(filePath: string): string {
+        const parts = normalize(filePath).split(sep);
+        const filePart = parts.slice(1).join(sep);
 
-        const emitResult = program.emit();
-        const diagnostics = getPreEmitDiagnostics(program).concat(emitResult.diagnostics);
-        if (diagnostics.length > 0) {
-            diagnostics.forEach((diagnostic) => {
-                if (diagnostic.file) {
-                    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
-                        <number> diagnostic.start
-                    );
-
-                    const message = flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                    console.error(`${ diagnostic.file.fileName } (${ line + 1 },${ character + 1 }): ${ message }`);
-                } else {
-                    console.error(flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
-                }
-            });
-
-            throw new Error('Declaration generation failed due to errors.');
-        }
+        return filePart.slice(0, -extname(filePart).length);
     }
 
-    /**
-     * Runs the TypeScript type checker on the given entry file.
-     */
+    private setDefaultPlugin(): void {
+        this.config.esbuild.plugins = this.config.esbuild.plugins ?? [];
+        const plugins = this.config.esbuild.plugins;
+        let process: null | ChildProcessWithoutNullStreams = null;
 
-    private runTypeChecker() {
-        const tsconfig = <any>readTsConfig(join(cwd(), this.config.esbuild.tsconfig ?? 'tsconfig.json'));
-        const program = createProgram(tsconfig.fileNames, {
-            ...tsconfig.options,
-            noEmit: true, // No need to emit files, just check types
-            skipLibCheck: true, // Skip type checking of declaration files in node_modules
-        });
 
-        const diagnostics = getPreEmitDiagnostics(program);
-        if (diagnostics.length > 0) {
-            diagnostics.forEach((diagnostic) => {
-                if (diagnostic.file) {
-                    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
-                        <number> diagnostic.start
-                    );
-                    const message = flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                    console.error(`${ diagnostic.file.fileName } (${ line + 1 },${ character + 1 }): ${ message }`);
-                } else {
-                    console.error(flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
-                }
-            });
+        plugins.unshift(rebuildPlugin(async () => {
+            if (!this.config.noTypeChecker || this.config.declaration)
+                this.typescriptDirective.runTypeCheckerOrEmitDeclaration(this.config.declaration);
+        }, async (result, build) => {
+            console.log(`build ended with ${ result.errors.length } errors`);
 
-            throw new Error('Type checking failed due to errors.');
-        }
+            if (!this.config.dev) {
+                return;
+            }
+
+            const file = join(<string> build.initialOptions.outdir, Object.keys(<any> build.initialOptions.entryPoints)[0] + '.js');
+            if (process) {
+                process.kill('SIGTERM');
+            }
+            process = spawn(file);
+            console.log(process.pid);
+        }));
+
+        plugins.unshift(
+            contentPlugin(
+                this.typescriptDirective, <string> this.config.esbuild.outdir, this.config.esbuild.format === 'esm'
+            )
+        );
     }
-
 }

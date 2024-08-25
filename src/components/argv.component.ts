@@ -11,6 +11,32 @@ import type { ArgvInterface } from '@components/interfaces/argv.interface';
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { version } from '../../package.json';
+
+/**
+ * ASCII Logo and Version Information
+ */
+
+const asciiLogo = `
+     ______       _ _     _
+     | ___ \\     (_) |   | |
+__  _| |_/ /_   _ _| | __| |
+\\ \\/ / ___ \\ | | | | |/ _\` |
+ >  <| |_/ / |_| | | | (_| |
+/_/\\_\\____/ \\__,_|_|_|\\__,_|
+`;
+
+// ANSI escape codes for colors
+const cleanScreen = '\x1Bc';
+const pastelOrange = '\x1b[38;5;214m'; // Light orange color
+const pastelPurple = '\x1b[38;5;135m'; // Light purple color
+const reset = '\x1b[0m'; // Reset color
+
+const versionInfo = `
+${ cleanScreen }
+${ pastelOrange }${ asciiLogo }${ reset }
+Version: ${ pastelPurple }${ version }${ reset }
+`;
 
 /**
  * Parses command-line arguments into an `ArgvInterface` object using `yargs`.
@@ -31,7 +57,7 @@ import { hideBin } from 'yargs/helpers';
  */
 
 export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
-    return <Argv<ArgvInterface>> yargs(hideBin(argv))
+    const cli =  yargs(hideBin(argv))
         .command('$0 [file]', 'A versatile JavaScript and TypeScript toolchain build system.', (yargs) => {
             yargs
                 .positional('entryPoints', {
@@ -109,8 +135,33 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                     describe: 'Continue building even if there are TypeScript type errors',
                     type: 'boolean',
                     default: false
+                })
+                .option('version', {
+                    alias: 'v',
+                    describe: 'Show version number',
+                    type: 'boolean',
+                    default: false,
+                    conflicts: 'help'
                 });
         })
         .help()
-        .alias('help', 'h');
+        .alias('help', 'h')
+        .version(false) // Disable the default version behavior
+        .middleware((argv) => {
+            if (argv.version) {
+                console.log(versionInfo);
+                process.exit(0);
+            }
+        });
+
+    // Custom help message with version info at the top
+    cli.showHelp((helpText) => {
+        if (process.argv.includes('--help') || process.argv.includes('-h')) {
+            console.log(versionInfo);
+            console.log(helpText + '\n\n');
+            process.exit(0); // Ensure the process exits after showing help
+        }
+    });
+
+    return <Argv<ArgvInterface>> cli;
 }

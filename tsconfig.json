@@ -30,6 +30,12 @@
             "@plugins/*": [
                 "src/plugins/*"
             ],
+            "@directives/*": [
+                "src/directives/*"
+            ],
+            "@services/*": [
+                "src/core/services/*"
+            ],
             "@providers/*": [
                 "src/core/providers/*"
             ],

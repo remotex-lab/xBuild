@@ -13,7 +13,7 @@ import pkg from './package.json' with  { type: 'json' };
 
 const externals = [
     ...Object.keys(pkg.dependencies ?? {}),
-    ...Object.keys(pkg.devDependencies ?? {}),
+    ...Object.keys(pkg.devDependencies ?? {})
 ];
 
 const config: xBuildConfig = {
@@ -25,6 +25,7 @@ const config: xBuildConfig = {
         platform: 'node',
         external: externals,
         sourcemap: true,
+        sourceRoot: 'https://github.com/remotex-lab/xBuild/tree/master/',
         entryPoints: [ 'src/index.ts' ]
     }
 };

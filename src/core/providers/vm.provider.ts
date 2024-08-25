@@ -23,5 +23,5 @@ export function sandboxExecute(code: string, sandbox: Context = {}) {
     const script = new Script(code);
     const context = createContext(sandbox);
 
-    return script.runInContext(context);
+    return script.runInContext(context, { breakOnSigint: true });
 }

@@ -5,6 +5,17 @@ export default tseslint.config(
     ...tseslint.configs.recommended,
     jsdoc.configs['flat/recommended'],
     {
+        ignores: [
+            'dist/*',
+            '**/*.js',
+            '**/*.d.ts',
+            'includes/*',
+            '**/*.spec.ts',
+            'jest.config.cjs',
+            'eslint.config.mjs'
+        ]
+    },
+    {
         plugins: {
             jsdoc
         },
@@ -80,14 +91,7 @@ export default tseslint.config(
                     'private-instance-method'
                 ]
             }]
-        },
-        ignores: [
-            'dist/*',
-            '**/*.js',
-            'includes/*',
-            'jest.config.cjs',
-            'eslint.config.mjs'
-        ]
+        }
     },
     {
         files: ["**/*.spec.ts"],

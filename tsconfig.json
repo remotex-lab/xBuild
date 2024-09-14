@@ -24,28 +24,26 @@
             "node"
         ],
         "paths": {
-            "@core/*": [
-                "src/core/*"
-            ],
-            "@plugins/*": [
-                "src/plugins/*"
-            ],
-            "@directives/*": [
-                "src/directives/*"
+            "@errors/*": [
+                "src/errors/*"
             ],
             "@services/*": [
-                "src/core/services/*"
+                "src/services/*"
             ],
             "@providers/*": [
-                "src/core/providers/*"
+                "src/providers/*"
             ],
             "@components/*": [
                 "src/components/*"
+            ],
+            "@configuration/*": [
+                "src/configuration/*"
             ]
         }
     },
     "include": [
-        "src/**/*"
+        "src/**/*.ts",
+        "includes/**/*.ts"
     ],
     "exclude": [
         "dist",

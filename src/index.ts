@@ -1,41 +1,45 @@
 #!/usr/bin/env node
 
 /**
+ * Exports
+ */
+
+export * from '@configuration/interfaces/configuration.interface';
+
+/**
  * Import will remove at compile time
  */
 
-import type { ArgvInterface } from '@components/interfaces/argv.interface';
+import type { BaseError } from '@errors/base.error';
+import type { ArgvInterface } from '@services/interfaces/cli.interface';
 
 /**
  * Imports
  */
 
-import { argvParser } from '@components/argv.component';
-import { errorHandler } from '@providers/error.provider';
-import { BuildDirective } from '@directives/build.directive';
-import { getConfiguration } from '@components/configuration.component';
+import { argvParser } from '@services/cli.service';
+import { BuildService } from '@services/build.service';
+import { bannerComponent } from '@components/banner.component';
+import { configuration } from '@providers/configuration.provider';
 
 /**
  * Clean cli
  */
 
-process.stdout.write('\x1Bc');
+global.__ACTIVE_COLOR = true;
+console.log(bannerComponent());
 
 /**
  * Main run
  */
 
 async function run() {
-    const cli = argvParser(process.argv);
-    const args = <ArgvInterface> cli.argv;
-
-
     try {
-        const config = await getConfiguration(args.config, cli);
-        const build = new BuildDirective(config);
-        if (args.dev) {
-            return await build.dev();
-        }
+        const cli = argvParser(process.argv);
+        const args = <ArgvInterface> cli.argv;
+
+        const config = await configuration(args.config, cli);
+        const build = new BuildService(config);
 
         if(args.serve) {
             return await build.serve();
@@ -43,7 +47,7 @@ async function run() {
 
         await build.run();
     } catch (error) {
-        errorHandler(error);
+        console.log((<BaseError> error).toString());
     }
 }
 

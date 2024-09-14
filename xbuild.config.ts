@@ -9,12 +9,11 @@ import type { xBuildConfig } from '@remotex-labs/xbuild';
  */
 
 import { version } from 'process';
-import pkg from './package.json' with  { type: 'json' };
+import pkg from './package.json' with { type: 'json' };
 
-const externals = [
-    ...Object.keys(pkg.dependencies ?? {}),
-    ...Object.keys(pkg.devDependencies ?? {})
-];
+/**
+ * Config build
+ */
 
 const config: xBuildConfig = {
     declaration: true,
@@ -23,10 +22,15 @@ const config: xBuildConfig = {
         minify: true,
         target: [ `node${ version.slice(1) }` ],
         platform: 'node',
-        external: externals,
+        packages: 'external',
         sourcemap: true,
         sourceRoot: 'https://github.com/remotex-lab/xBuild/tree/master/',
-        entryPoints: [ 'src/index.ts' ]
+        entryPoints: {
+            index: 'src/index.ts'
+        },
+        define: {
+            __VERSION: JSON.stringify(pkg.version)
+        }
     }
 };
 

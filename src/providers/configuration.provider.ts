@@ -3,6 +3,7 @@
  */
 
 import type { Argv } from 'yargs';
+import type { BuildOptions } from 'esbuild';
 import type { ParsedCommandLine } from 'typescript';
 import type { ArgvInterface } from '@services/interfaces/cli.interface';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
@@ -17,6 +18,27 @@ import { existsSync, readFileSync } from 'fs';
 import { xBuildError } from '@errors/xbuild.error';
 import { defaultConfiguration } from '@configuration/default.configuration';
 import { parseConfigurationFile } from '@configuration/parse.configuration';
+
+/**
+ * Default tsconfig if not supplied
+ */
+
+const tsConfigDefault = JSON.stringify({
+    'compilerOptions': {
+        'strict': true,
+        'target': 'ESNext',
+        'module': 'ESNext',
+        'outDir': 'dist',
+        'skipLibCheck': true,
+        'isolatedModules': false,
+        'esModuleInterop': false,
+        'moduleDetection': 'force',
+        'moduleResolution': 'node',
+        'resolveJsonModule': true,
+        'allowSyntheticDefaultImports': true,
+        'forceConsistentCasingInFileNames': true
+    }
+});
 
 /**
  * Parses CLI arguments and sets the configuration for the application.
@@ -84,33 +106,46 @@ function setCliConfiguration(cli: Argv<ArgvInterface>): ConfigurationInterface {
 }
 
 /**
- * Reads and parses a TypeScript configuration file.
+ * Reads and parses the TypeScript configuration file (e.g., `tsconfig.json`), returning a `ParsedCommandLine` object.
+ * This function handles the file reading and parsing, and throws detailed errors if any issues are encountered during
+ * the parsing process, such as syntax errors or other invalid configurations.
  *
- * This function reads a TypeScript configuration file (e.g., `tsconfig.json`) and parses it into a `ParsedCommandLine` object.
- * It performs error handling by throwing detailed errors if the configuration file is invalid or contains parsing issues.
+ * If a specific `tsconfig` path is provided in the `options`, it attempts to read from that file. If no file is found
+ * or provided, it defaults to using a pre-defined configuration. It also supports setting the `tsconfigRaw` option with
+ * default configurations when no file is available.
  *
- * @param tsconfigFile - The path to the TypeScript configuration file to read and parse.
+ * @param options - A `BuildOptions` object that may contain a custom `tsconfig` path. If a valid `tsconfig` path is
+ * provided and exists, the file is read and parsed. Otherwise, the function will fall back to the default configuration.
  *
- * @returns The parsed TypeScript configuration as a `ParsedCommandLine` object.
+ * @returns A `ParsedCommandLine` object representing the parsed TypeScript configuration.
  *
- * @throws {Error} Throws an error if the configuration file contains syntax errors or parsing issues.
- *
- * @see {@link https://www.typescriptlang.org/docs/handbook/tsconfig-json.html} for more information on TypeScript configuration files.
+ * @throws {xBuildError} Throws an error if the configuration file contains syntax errors or any parsing issues.
+ * The error provides detailed diagnostic information formatted with color and context.
  *
  * @example
  * // Example usage:
  * try {
- *     const parsedConfig = tsConfiguration('tsconfig.json');
+ *     const parsedConfig = tsConfiguration({ tsconfig: 'tsconfig.json' });
  *     console.log(parsedConfig);
  * } catch (error) {
  *     console.error('Error parsing TypeScript configuration:', error);
  * }
+ *
+ * @see {@link https://www.typescriptlang.org/docs/handbook/tsconfig-json.html TypeScript Handbook} for more information on `tsconfig.json`.
  */
 
-export function tsConfiguration(tsconfigFile: string): ParsedCommandLine {
-    const configFile = readFileSync(tsconfigFile, 'utf8');
-    const configFileJson = ts.parseConfigFileTextToJson(tsconfigFile, configFile);
+export function tsConfiguration(options: BuildOptions): ParsedCommandLine {
+    let configFile = tsConfigDefault;
+    const tsConfigFile = options.tsconfig ?? '';
 
+    if(tsConfigFile && existsSync(tsConfigFile)) {
+        configFile = readFileSync(tsConfigFile, 'utf8');
+    } else {
+        delete options.tsconfig;
+        options.tsconfigRaw = tsConfigDefault;
+    }
+
+    const configFileJson = ts.parseConfigFileTextToJson(tsConfigFile, configFile);
     if (configFileJson.error) {
         throw new xBuildError(ts.formatDiagnosticsWithColorAndContext([ configFileJson.error ], {
             getCurrentDirectory: ts.sys.getCurrentDirectory,
@@ -122,7 +157,7 @@ export function tsConfiguration(tsconfigFile: string): ParsedCommandLine {
     const configParseResult = ts.parseJsonConfigFileContent(
         configFileJson.config,
         ts.sys,
-        dirname(tsconfigFile)
+        dirname(tsConfigFile)
     );
 
     if (configParseResult.errors.length > 0) {

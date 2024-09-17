@@ -54,7 +54,7 @@ export class ServerProvider {
      *     port: 8080,
      *     keyfile: './path/to/keyfile',
      *     certfile: './path/to/certfile',
-     *     onRequest: (req, res, defaultHandler) => { /* custom request handling *\/ }
+     *     onRequest: (req, res, next) => { /* custom request handling *\/ }
      * };
      * const provider = new ServerProvider(serverConfig, './public');
      * provider.start();

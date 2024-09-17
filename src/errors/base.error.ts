@@ -183,7 +183,8 @@ export abstract class BaseError extends Error {
         }
 
         // Add enhanced stack trace if available
-        formattedError += `Enhanced Stack Trace:\n${ this.stackArray.join('\n') }\n`;
+        if( this.stackArray.length > 0)
+            formattedError += `Enhanced Stack Trace:\n${ this.stackArray.join('\n') }\n`;
 
         return formattedError;
     }

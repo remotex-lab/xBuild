@@ -34,13 +34,23 @@ export class xBuildError extends BaseError {
             Error.captureStackTrace(this, xBuildError);
         }
 
-        // Assign the name of the error
-        this.name = 'xBuildError';
-        this.stack = this.reformatStack(this.stack);
-
         // Apply additional options if provided
         if (options) {
             Object.assign(this, options);
         }
+
+        // Assign the name of the error
+        this.name = 'xBuildError';
+        this.stack = this.reformatStack(this.stack);
+    }
+
+    /**
+     * Set external stack
+     * Todo
+     */
+
+    setStack(stack: string): void {
+        this.blockCode = null;
+        this.stack = this.reformatStack(stack);
     }
 }

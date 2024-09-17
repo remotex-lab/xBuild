@@ -32,7 +32,7 @@ import { bannerComponent } from '@components/banner.component';
  */
 
 export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
-    const cli =  yargs(hideBin(argv))
+    const cli = yargs(hideBin(argv))
         .command('$0 [file]', 'A versatile JavaScript and TypeScript toolchain build system.', (yargs) => {
             yargs
                 .positional('entryPoints', {
@@ -47,7 +47,12 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                 })
                 .option('dev', {
                     alias: 'd',
-                    describe: 'Array entryPoints to run for development',
+                    describe: 'Array entryPoints to run as development in Node.js',
+                    type: 'array'
+                })
+                .option('debug', {
+                    alias: 'db',
+                    describe: 'Array entryPoints to run in Node.js with debug state',
                     type: 'array'
                 })
                 .option('serve', {

@@ -3,7 +3,7 @@
  */
 
 import type { ChildProcessWithoutNullStreams } from 'child_process';
-import type { BuildContext, BuildResult, Message, Metafile, Plugin, SameShape } from 'esbuild';
+import type { BuildContext, BuildResult, Message, Metafile, SameShape } from 'esbuild';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
 
 /**
@@ -13,13 +13,17 @@ import type { ConfigurationInterface } from '@configuration/interfaces/configura
 import { resolve } from 'path';
 import { build, context } from 'esbuild';
 import { spawn } from '@services/process.service';
+import { xBuildError } from '@errors/xbuild.error';
+import { esBuildError } from '@errors/esbuild.error';
 import { prefix } from '@components/banner.component';
+import { ServerProvider } from '@providers/server.provider';
+import { PluginsProvider } from '@providers/plugins.provider';
+import { parseIfDefConditionals } from '@plugins/ifdef.plugin';
 import { Colors, setColor } from '@components/colors.component';
 import { analyzeDependencies } from '@services/transpiler.service';
 import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
-import { ServerProvider } from '@providers/server.provider';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -64,6 +68,8 @@ export class BuildService {
 
     private activePossess: Array<ChildProcessWithoutNullStreams> = [];
 
+    private pluginsProvider: PluginsProvider;
+
     /**
      * Initializes the build service with the provided configuration.
      *
@@ -75,12 +81,92 @@ export class BuildService {
     constructor(private config: ConfigurationInterface) {
         this.config.esbuild.logLevel = 'silent';
         this.typeScriptProvider = new TypeScriptProvider(
-            tsConfiguration(this.config.esbuild.tsconfig ?? ''), this.config.esbuild.outdir ?? ''
+            tsConfiguration(this.config.esbuild), this.config.esbuild.outdir ?? 'dist'
         );
 
         if (this.config.dev !== false && (!Array.isArray(this.config.dev) || this.config.dev.length < 1))
             this.config.dev = [ 'index' ];
+
+        this.pluginsProvider = new PluginsProvider();
+        this.pluginsProvider.registerOnEnd(this.end.bind(this));
+        this.pluginsProvider.registerOnStart(this.start.bind(this));
+        this.pluginsProvider.registerOnLoad((content, loader, args) => {
+            if (!args.path.endsWith('.ts'))
+                return;
+
+            return {
+                loader: 'ts',
+                contents: parseIfDefConditionals(content.toString(), this.config.define)
+            };
+        });
     }
+
+    /**
+     * Runs the build process in debug mode for the specified entry points.
+     *
+     * This method temporarily disables development and watch mode, initiates the build process, and spawns development processes
+     * for the specified entry points. If any errors occur during the build, they are handled appropriately.
+     *
+     * @param entryPoints - An array of entry point file names for which the development processes will be spawned.
+     * These entry points are matched against the build output files.
+     *
+     * @returns A `Promise<void>` that resolves when the build and process spawning have completed.
+     *
+     * @throws Handles any build-related errors using the `handleErrors` method.
+     *
+     * @remarks
+     * - The `config.dev` and `config.watch` settings are temporarily disabled to prevent development mode or file watching during the build.
+     * - The `build()` method is called to generate the necessary build outputs.
+     * - The `spawnDev` method is then invoked to spawn processes for the matching entry points.
+     * - If any errors occur during the build, they are caught and passed to the `handleErrors` method.
+     *
+     * @example
+     * ```typescript
+     * const entryPoints = ['index', 'main'];
+     * await this.runDebug(entryPoints);
+     * ```
+     *
+     * In this example, the `runDebug` method runs the build process and spawns development processes for `index` and `main`.
+     *
+     * @public
+     */
+
+    async runDebug(entryPoints: Array<string>): Promise<void> {
+        try {
+            this.config.dev = false;
+            this.config.watch = false;
+            const result = <BuildResult> await this.build();
+            this.spawnDev(<Metafile> result.metafile, entryPoints, true);
+        } catch (esbuildError: unknown) {
+            this.handleErrors(esbuildError);
+        }
+    }
+
+    /**
+     * Serves the project and watches for changes.
+     *
+     * This method starts the development server using the `ServerProvider`, builds the project using esbuild,
+     * and watches for file changes to automatically rebuild as needed. It initializes the server and invokes
+     * the build process, enabling continuous development mode.
+     *
+     * @returns A promise that resolves when the server is started and the build process is complete.
+     *
+     * @throws This method catches any errors thrown during the build process and handles them using the
+     * `handleErrors` method.
+     *
+     * @example
+     * ```typescript
+     * const buildService = new BuildService(config);
+     * buildService.serve().then(() => {
+     *     console.log('Server is running and watching for changes.');
+     * }).catch((error) => {
+     *     console.error('Failed to start the server:', error);
+     * });
+     * ```
+     *
+     * In this example, the `serve` method starts the server and watches for changes. If an error occurs during
+     * the build or server startup, it is handled and logged.
+     */
 
     async serve() {
         const server = new ServerProvider(this.config.serve, this.config.esbuild.outdir ?? '');
@@ -89,16 +175,8 @@ export class BuildService {
             server.start();
             const result = await this.build();
             await (<BuildContext> result).watch();
-
         } catch (esbuildError: unknown) {
-            const errors = (<{ [keys: string]: Array<Message> }> esbuildError).errors;
-
-            for (const error of errors) {
-                if (error.detail.name === 'TypesError')
-                    continue;
-
-                console.error(error.text);
-            }
+            this.handleErrors(esbuildError);
         }
     }
 
@@ -135,14 +213,58 @@ export class BuildService {
                 await (<BuildContext> result).watch();
             }
         } catch (esbuildError: unknown) {
-            const errors = (<{ [keys: string]: Array<Message> }> esbuildError).errors;
+            this.handleErrors(esbuildError);
+        }
+    }
 
-            for (const error of errors) {
-                if (error.detail.name === 'TypesError')
-                    continue;
+    /**
+     * Handles errors during the build process.
+     *
+     * This method processes and logs errors that occur during the esbuild process. It specifically filters out
+     * errors related to TypeScript (`TypesError`) to prevent them from being logged, while logging all other errors
+     * to the console. The error object is assumed to contain a list of messages, each with detailed information.
+     *
+     * @param esbuildError - The error object returned by esbuild, which is expected to contain an array of
+     * error messages.
+     *
+     * @private
+     *
+     * @remarks
+     * - TypeScript errors (denoted as `TypesError`) are skipped and not logged.
+     * - Other errors are logged to the console with their text descriptions.
+     *
+     * @example
+     * ```typescript
+     * try {
+     *     await buildService.run();
+     * } catch (esbuildError) {
+     *     buildService.handleErrors(esbuildError);
+     * }
+     * ```
+     *
+     * In this example, if an error occurs during the build process, the `handleErrors` method is used to
+     * process and log the errors.
+     */
 
-                console.error(error.text);
+    private handleErrors(esbuildError: unknown): void {
+        const errors = (<{ [keys: string]: Array<Message> }> esbuildError).errors;
+
+        for (const error of errors) {
+            if (!error.detail) {
+                return console.log((new esBuildError(error)).toString());
             }
+
+            if (error.detail.name === 'TypesError')
+                continue;
+
+            if (error.detail.name && error.detail.name === 'Error') {
+                const xbuildError = new xBuildError(error.text);
+                xbuildError.setStack(error.detail.stack);
+
+                return console.log(xbuildError.toString());
+            }
+
+            return console.error(error.text);
         }
     }
 
@@ -156,12 +278,28 @@ export class BuildService {
      * @private
      */
 
-    private async build(): Promise<BuildContext | SameShape<unknown, unknown>> {
+    private async build(): Promise<BuildContext | SameShape<unknown, unknown> | BuildResult> {
         const esbuild = this.config.esbuild;
+        if (this.config.hooks) {
+            this.pluginsProvider.registerOnEnd(this.config.hooks.onEnd);
+            this.pluginsProvider.registerOnLoad(this.config.hooks.onLoad);
+            this.pluginsProvider.registerOnStart(this.config.hooks.onStart);
+            this.pluginsProvider.registerOnResolve(this.config.hooks.onResolve);
+        }
+
+        if (!esbuild.define) {
+            esbuild.define = {};
+        }
+
+        for (const key in this.config.define) {
+            esbuild.define[key] = JSON.stringify(this.config.define[key]);
+        }
+
         if (!this.config.esbuild.bundle) {
             await this.processEntryPoints();
         }
-        esbuild.plugins = [ this.rebuildPlugin() ];
+
+        esbuild.plugins = [ this.pluginsProvider.setup() ];
         if (this.config.watch || this.config.dev || this.config.serve.active) {
             return await context(esbuild);
         }
@@ -170,24 +308,50 @@ export class BuildService {
     }
 
     /**
-     * Manages development processes for specified files.
+     * Manages development processes for specified entry points.
      *
-     * This method spawns development processes for files listed in the metafile, enabling development mode features.
+     * This method spawns development processes for each file in the metafile that matches any of the specified entry points.
+     * It enables features like source maps and optional debugging mode for each spawned process.
      *
      * @param meta - The metafile containing information about build outputs.
+     * This typically includes a mapping of output files and their dependencies.
+     * @param enetryPoint - An array of entry point file names to match against the metafile outputs.
+     * Only files that match these entry points will have development processes spawned.
+     * @param debug - A boolean flag to enable debugging mode for spawned processes.
+     * If `true`, the processes will start in debug mode with the `--inspect-brk` option. Defaults to `false`.
+     *
+     * @returns void
+     *
+     * @remarks
+     * - Files that contain 'map' in their names (e.g., source map files) are ignored and no process is spawned for them.
+     * - For each matching file in the metafile outputs, a new development process is spawned using the `spawn` function.
+     * - The `activePossess` array tracks all spawned processes, allowing further management (e.g., termination).
+     *
+     * @example
+     * ```typescript
+     * const meta = {
+     *   outputs: {
+     *     'dist/index.js': { \/* ... *\/ },
+     *     'dist/index.js.map': { \/* ... *\/ }
+     *   }
+     * };
+     * const entryPoints = ['index'];
+     *
+     * this.spawnDev(meta, entryPoints, true); // Spawns processes in debug mode
+     * ```
      *
      * @private
      */
 
-    private spawnDev(meta: Metafile) {
-        if (!Array.isArray(this.config.dev))
+    private spawnDev(meta: Metafile, enetryPoint: Array<string>, debug: boolean = false) {
+        if (!Array.isArray(enetryPoint))
             return;
 
         for (const file in meta.outputs) {
-            if (file.includes('map') || !this.config.dev.some(key => file.includes(key)))
+            if (file.includes('map') || !enetryPoint.some(key => file.includes(`/${ key }.`)))
                 continue;
 
-            this.activePossess.push(spawn(file));
+            this.activePossess.push(spawn(file, debug));
         }
     }
 
@@ -245,37 +409,8 @@ export class BuildService {
         console.log('\n');
 
         if (this.config.dev) {
-            this.spawnDev(<Metafile> result.metafile);
+            this.spawnDev(<Metafile> result.metafile, <Array<string>> this.config.dev);
         }
-    }
-
-    /**
-     * Creates a plugin for esbuild to handle build notifications.
-     *
-     * The plugin sets up hooks to notify when the build starts and ends, including handling of build results.
-     *
-     * @returns A configured esbuild plugin.
-     *
-     * @private
-     */
-
-    private rebuildPlugin(): Plugin {
-        const end = this.end.bind(this);
-        const start = this.start.bind(this);
-
-        return {
-            name: 'rebuild-notify',
-            setup(build) {
-                build.initialOptions.metafile = true;
-                build.onStart(async () => {
-                    await start();
-                });
-
-                build.onEnd(async (result: BuildResult) => {
-                    await end(result);
-                });
-            }
-        };
     }
 
     /**

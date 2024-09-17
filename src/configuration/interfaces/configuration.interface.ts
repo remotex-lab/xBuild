@@ -4,6 +4,7 @@
 
 import type { BuildOptions } from 'esbuild';
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { OnEndType, OnLoadType, OnResolveType, OnStartType } from '@providers/interfaces/plugins.interfaces';
 
 /**
  * Represents the format for specifying entry points in TypeScript declaration generation.
@@ -127,8 +128,9 @@ export interface ModuleInterface {
  *         host: 'localhost',
  *         keyfile: '/path/to/ssl/keyfile.pem',
  *         certfile: '/path/to/ssl/certfile.pem',
- *         onRequest: () => {
+ *         onRequest: (req, res, next) => {
  *             console.log('Server request received');
+ *             next();
  *         }
  *     }
  * };
@@ -144,6 +146,54 @@ export interface Serve {
     keyfile?: string
     certfile?: string,
     onRequest?: (req: IncomingMessage, res: ServerResponse, next: () => void) => void
+}
+
+/**
+ * Defines the lifecycle hooks used in the plugin system.
+ *
+ * This interface specifies the types for various hooks that can be registered
+ * to customize the behavior of the build process. Each hook corresponds to a
+ * specific stage in the lifecycle of an esbuild operation.
+ *
+ * @interface hooks
+ *
+ * @property {OnEndType} onEnd - A hook function that is called after the build process completes.
+ *                               This allows for post-processing or cleanup tasks.
+ * @property {OnLoadType} onLoad - A hook function that is called when esbuild attempts to load a module.
+ *                                 It can be used to modify the contents of the loaded module.
+ * @property {OnStartType} onStart - A hook function that is called before the build process starts.
+ *                                    This is useful for initialization tasks or logging.
+ * @property {OnResolveType} onResolve - A hook function that is called when esbuild attempts to resolve a module path.
+ *                                        It can be used to customize module resolution behavior.
+ *
+ * @example
+ * ```typescript
+ * const myHooks: hooks = {
+ *     onEnd: async (result) => {
+ *         console.log('Build finished:', result);
+ *     },
+ *     onLoad: async (contents, loader, args) => {
+ *         // Modify contents if necessary
+ *         return { contents, loader };
+ *     },
+ *     onStart: async (build) => {
+ *         console.log('Build started:', build);
+ *     },
+ *     onResolve: async (args) => {
+ *         if (args.path === 'my-module') {
+ *             return { path: './src/my-module.ts' };
+ *         }
+ *         return null;
+ *     }
+ * };
+ * ```
+ */
+
+export interface hooks {
+    onEnd: OnEndType,
+    onLoad: OnLoadType,
+    onStart: OnStartType,
+    onResolve: OnResolveType,
 }
 
 /**
@@ -165,16 +215,26 @@ export interface Serve {
  *         bundle: true,
  *         minify: true,
  *         target: 'es2020'
+ *     },
+ *     hooks: {
+ *         onStart: async (build) => {
+ *             console.log('Build started');
+ *         },
+ *         onEnd: async (result) => {
+ *             console.log('Build finished:', result);
+ *         }
  *     }
  * };
  * ```
  *
  * In this example, the configuration sets the application to development mode with file watching enabled,
  * generates TypeScript declaration files, continues building on TypeScript errors, and includes esbuild options for bundling and minification.
+ * Additionally, custom hooks are provided to log messages at the start and end of the build process.
  *
  * @public
  * @category Configuration
  */
+
 
 export interface ConfigurationInterface {
     /**
@@ -218,6 +278,44 @@ export interface ConfigurationInterface {
      */
 
     serve: Serve;
+
+    /**
+     * lifecycle hooks to customize the build process.
+     *
+     * This property allows you to provide implementations for various hooks defined in the `hooks` interface.
+     * Using `Partial<hooks>` means you can specify only the hooks you want to implement,
+     * while the others will default to `undefined`.
+     */
+
+    hooks?: Partial<hooks>;
+
+    /**
+     * A dictionary of define options for the build process.
+     *
+     * This property allows you to specify global constants that can be replaced during the build process.
+     * Each key-value pair in the `define` object represents a constant where the key is the name of the
+     * constant, and the value is the string to replace it with. This is particularly useful for feature flags,
+     * environment-specific configurations, or any other value that you may want to define at compile time.
+     *
+     * @example
+     * ```typescript
+     * const config: ConfigurationInterface = {
+     *     dev: true,
+     *     define: {
+     *         'process.env.NODE_ENV': 'development',
+     *         'API_URL': 'https://api.example.com'
+     *     }
+     * };
+     * ```
+     *
+     * In this example, the constants `process.env.NODE_ENV` and `API_URL` will be replaced with their
+     * corresponding values during the build, making it easy to manage different configurations across
+     * various environments.
+     *
+     * @public
+     */
+
+    define: Record<string, unknown>
 }
 
 interface ExportedConfigurationInterface extends ConfigurationInterface {
@@ -237,5 +335,3 @@ interface ExportedConfigurationInterface extends ConfigurationInterface {
  */
 
 export type xBuildConfig = PartialDeep<ExportedConfigurationInterface>;
-
-// Todo defines, plugins ansi

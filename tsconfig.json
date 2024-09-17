@@ -27,6 +27,9 @@
             "@errors/*": [
                 "src/errors/*"
             ],
+            "@plugins/*": [
+                "src/plugins/*"
+            ],
             "@services/*": [
                 "src/services/*"
             ],

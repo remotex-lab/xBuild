@@ -122,14 +122,17 @@ describe('tsConfiguration', () => {
             errors: []
         };
 
-        (readFileSync as jest.Mock).mockReturnValue(mockConfigFileContent);
+        (existsSync as jest.Mock).mockImplementationOnce(() => true);
+        (readFileSync as jest.Mock).mockReturnValueOnce(mockConfigFileContent);
         (ts.parseConfigFileTextToJson as jest.Mock).mockReturnValue({
             config: JSON.parse(mockConfigFileContent),
             error: null
         });
         (ts.parseJsonConfigFileContent as jest.Mock).mockReturnValue(mockParsedConfig);
 
-        const result = tsConfiguration(mockTsconfigPath);
+        const result = tsConfiguration({
+            tsconfig: mockTsconfigPath
+        });
 
         expect(result).toEqual(mockParsedConfig);
         expect(readFileSync).toHaveBeenCalledWith(mockTsconfigPath, 'utf8');
@@ -156,14 +159,17 @@ describe('tsConfiguration', () => {
             messageText: 'Invalid JSON'
         };
 
-        (readFileSync as jest.Mock).mockReturnValue(invalidJson);
+        (existsSync as jest.Mock).mockImplementationOnce(() => true);
+        (readFileSync as jest.Mock).mockReturnValueOnce(invalidJson);
         (ts.parseConfigFileTextToJson as jest.Mock).mockReturnValue({
             config: null,
             error: mockError
         });
         (ts.formatDiagnosticsWithColorAndContext as jest.Mock).mockReturnValue('Invalid JSON');
 
-        expect(() => tsConfiguration(mockTsconfigPath)).toThrow('Invalid JSON');
+        expect(() => tsConfiguration({
+            tsconfig: mockTsconfigPath
+        })).toThrow('Invalid JSON');
         expect(readFileSync).toHaveBeenCalledWith(mockTsconfigPath, 'utf8');
         expect(ts.parseConfigFileTextToJson).toHaveBeenCalledWith(mockTsconfigPath, invalidJson);
     });
@@ -192,7 +198,8 @@ describe('tsConfiguration', () => {
             messageText: 'Parsing Error'
         };
 
-        (readFileSync as jest.Mock).mockReturnValue(mockConfigFileContent);
+        (existsSync as jest.Mock).mockImplementationOnce(() => true);
+        (readFileSync as jest.Mock).mockReturnValueOnce(mockConfigFileContent);
         (ts.parseConfigFileTextToJson as jest.Mock).mockReturnValue({
             config: JSON.parse(mockConfigFileContent),
             error: null
@@ -205,7 +212,9 @@ describe('tsConfiguration', () => {
         });
         (ts.formatDiagnosticsWithColorAndContext as jest.Mock).mockReturnValue('Parsing Error');
 
-        expect(() => tsConfiguration(mockTsconfigPath)).toThrow('Parsing Error');
+        expect(() => tsConfiguration({
+            tsconfig: mockTsconfigPath
+        })).toThrow('Parsing Error');
         expect(readFileSync).toHaveBeenCalledWith(mockTsconfigPath, 'utf8');
         expect(ts.parseConfigFileTextToJson).toHaveBeenCalledWith(mockTsconfigPath, mockConfigFileContent);
         expect(ts.parseJsonConfigFileContent).toHaveBeenCalledWith(
@@ -231,11 +240,14 @@ describe('tsConfiguration', () => {
     test('should handle file read errors', () => {
         const readError = new Error('File read error');
 
-        (readFileSync as jest.Mock).mockImplementation(() => {
+        (existsSync as jest.Mock).mockImplementationOnce(() => true);
+        (readFileSync as jest.Mock).mockImplementationOnce(() => {
             throw readError;
         });
 
-        expect(() => tsConfiguration(mockTsconfigPath)).toThrow('File read error');
+        expect(() => tsConfiguration({
+            tsconfig: mockTsconfigPath
+        })).toThrow('File read error');
     });
 });
 

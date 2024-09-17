@@ -55,7 +55,7 @@ function wrapFunctionWithSourceMap<T extends (...args: unknown[]) => unknown>(
         try {
             return fn(...args) as ReturnType<T>;
         } catch (error) {
-            throw new VMRuntimeError(<any> error, sourceMap);
+            throw new VMRuntimeError(<Error> error, sourceMap);
         }
     }) as T;
 }

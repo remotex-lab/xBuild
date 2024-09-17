@@ -17,7 +17,8 @@
 export interface ArgvInterface {
     node: boolean,
     file: string,
-    dev: boolean,
+    dev: Array<string>,
+    debug: Array<string>,
     serve: boolean,
     outdir: string,
     declaration: boolean,

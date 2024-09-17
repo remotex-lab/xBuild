@@ -28,6 +28,7 @@ module.exports = {
     ],
     moduleNameMapper: {
         '^@errors/(.*)$': '<rootDir>/src/errors/$1',
+        '^@plugins/(.*)$': '<rootDir>/src/errors/$1',
         '^@services/(.*)$': '<rootDir>/src/services/$1',
         '^@providers/(.*)$': '<rootDir>/src/providers/$1',
         '^@components/(.*)$': '<rootDir>/src/components/$1',

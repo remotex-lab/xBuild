@@ -32,6 +32,7 @@ export const defaultConfiguration: ConfigurationInterface = {
     declaration: false,
     buildOnError: false,
     noTypeChecker: false,
+    define: {},
     esbuild: {
         write: true,
         bundle: true,

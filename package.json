@@ -45,7 +45,7 @@
         "Xbuild": "./dist/index.js"
     },
     "scripts": {
-        "dev": "xBuild -d",
+        "dev": "xBuild -w",
         "test": "jest",
         "build": "xBuild",
         "test:coverage": "jest --coverage",
@@ -63,7 +63,7 @@
         "@swc/jest": "^0.2.36",
         "@types/jest": "^29.5.12",
         "@types/node": "^22.5.5",
-        "@remotex-labs/xbuild": "^0.0.2-beta.0"
+        "@remotex-labs/xbuild": "^0.0.2-beta.1"
     },
     "dependencies": {
         "yargs": "^17.7.2",

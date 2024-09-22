@@ -57,12 +57,13 @@ export const cleanScreen = '\x1Bc';
  *
  * This will output the banner to the console with the ASCII logo and version number without color formatting.
  *
+ * Todo \r${ activeColor ? cleanScreen : '' }
+ *
  * @public
  */
 
 export function bannerComponent(activeColor: boolean = true): string {
     return `
-        \r${ activeColor ? cleanScreen : '' }
         \r${ setColor(Colors.BurntOrange, asciiLogo, activeColor) }
         \rVersion: ${ setColor(Colors.BrightPink, __VERSION, activeColor) }
     \r`;

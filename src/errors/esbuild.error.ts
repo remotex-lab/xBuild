@@ -9,6 +9,8 @@ import type { Message } from 'esbuild';
  */
 
 import { BaseError } from '@errors/base.error';
+import { Colors } from '@components/colors.component';
+import { formatErrorCode, highlightCode } from '@remotex-labs/xmap';
 
 /**
  * Represents an error that occurs during the esbuild process.
@@ -59,8 +61,6 @@ export class esBuildError extends BaseError {
 
     constructor(message: Message) {
         super(message.text);
-        // todo print source code of the error
-        // use html import
 
         // Maintain proper stack trace
         if (Error.captureStackTrace) {
@@ -69,5 +69,31 @@ export class esBuildError extends BaseError {
 
         // Assign the name of the error
         this.name = 'EsbuildError';
+
+        if (!message.location)
+            return;
+
+        const location = message.location;
+        this.stackArray = this.getFormattedStackEntries([{
+            at: '',
+            line: location.line,
+            column: location.column,
+            file: location.file
+        }], this.sourceMap);
+
+        const highlightedCode = __ACTIVE_COLOR ? highlightCode(location.lineText) : location.lineText;
+        this.blockCode = formatErrorCode({
+            line: location.line,
+            name: null,
+            column: location.column,
+            source: location.file,
+            endLine: location.line + 1,
+            startLine: location.line - 1,
+            sourceRoot: location.file,
+            code: highlightedCode
+        }, {
+            color: __ACTIVE_COLOR ? Colors.BrightPink : '',
+            reset: __ACTIVE_COLOR ? Colors.Reset : ''
+        });
     }
 }

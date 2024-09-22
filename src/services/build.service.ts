@@ -68,6 +68,12 @@ export class BuildService {
 
     private activePossess: Array<ChildProcessWithoutNullStreams> = [];
 
+    /**
+     * Plugin provider
+     *
+     * @private
+     */
+
     private pluginsProvider: PluginsProvider;
 
     /**
@@ -257,11 +263,15 @@ export class BuildService {
             if (error.detail.name === 'TypesError')
                 continue;
 
-            if (error.detail.name && error.detail.name === 'Error') {
-                const xbuildError = new xBuildError(error.text);
-                xbuildError.setStack(error.detail.stack);
+            if (error.detail.name) {
+                if (error.detail.name === 'VMRuntimeError') {
+                    return console.log(error.detail.toString());
+                } else if (error.detail.name === 'Error') {
+                    const xbuildError = new xBuildError(error.text);
+                    xbuildError.setStack(error.detail.stack);
 
-                return console.log(xbuildError.toString());
+                    return console.log(xbuildError.toString());
+                }
             }
 
             return console.error(error.text);

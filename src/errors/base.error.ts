@@ -177,7 +177,7 @@ export abstract class BaseError extends Error {
     toString(): string {
         // Create a header with the error name and message
         let formattedError = __ACTIVE_COLOR ? Colors.Reset : '';
-        formattedError += `${ this.name }: \n${ this.message }\n\n`;
+        formattedError += `\n${ this.name }: \n${ this.message }\n\n`;
         if (this.blockCode) {
             formattedError += `${ this.blockCode }\n\n`;
         }
@@ -225,7 +225,7 @@ export abstract class BaseError extends Error {
      * @returns An array of formatted stack trace entries.
      */
 
-    private getFormattedStackEntries(stackEntries: StackEntryInterface[], sourceMap: SourceService): string[] {
+    protected getFormattedStackEntries(stackEntries: StackEntryInterface[], sourceMap: SourceService): string[] {
         const formattedEntries: string[] = [];
 
         stackEntries.forEach((item) => {

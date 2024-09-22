@@ -4,7 +4,8 @@
  * Exports
  */
 
-export * from '@configuration/interfaces/configuration.interface';
+export type * from '@configuration/interfaces/configuration.interface';
+export type { BuildResult, OnLoadArgs, OnLoadResult, OnResolveArgs, OnResolveResult, PluginBuild } from 'esbuild';
 
 /**
  * Import will remove at compile time

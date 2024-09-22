@@ -3,7 +3,7 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "author": "Garefild",
-    "version": "0.0.2-beta.3",
+    "version": "v1.0.0",
     "license": "Mozilla Public License Version 2.0",
     "description": "A versatile JavaScript and TypeScript toolchain build system",
     "homepage": "https://github.com/remotex-lab/xBuild",
@@ -67,6 +67,6 @@
     "dependencies": {
         "yargs": "^17.7.2",
         "esbuild": "^0.23.1",
-        "@remotex-labs/xmap": "^1.0.3"
+        "@remotex-labs/xmap": "^1.0.4"
     }
 }

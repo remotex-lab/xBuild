@@ -12,6 +12,7 @@ import type { Serve } from '@configuration/interfaces/configuration.interface';
 
 import * as http from 'http';
 import * as https from 'https';
+import html from './html/server.html';
 import { extname, join, resolve } from 'path';
 import { prefix } from '@components/banner.component';
 import { Colors, setColor } from '@components/colors.component';
@@ -310,68 +311,8 @@ export class ServerProvider {
                 return `<li><i class="fas ${ icon }" style="color: ${ color };"></i> <a href="${ join(requestPath, file) }">${ file }</a></li>`;
             }).join('');
 
-            // todo external html
-            const html = `
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Directory Listing</title>
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            background-color: #f4f4f4;
-                        }
-                        h1 {
-                            color: #333;
-                            text-align: center;
-                            padding: 20px;
-                        }
-                        ul {
-                            list-style: none;
-                            padding: 0;
-                            margin: 0;
-                            display: flex;
-                            flex-wrap: wrap;
-                            justify-content: center;
-                        }
-                        li {
-                            background: #fff;
-                            border: 1px solid #ddd;
-                            border-radius: 4px;
-                            margin: 5px;
-                            padding: 10px;
-                            width: 200px;
-                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                            display: flex;
-                            align-items: center;
-                        }
-                        i {
-                            margin-right: 10px;
-                            font-size: 18px;
-                            color: #666;
-                        }
-                        a {
-                            text-decoration: none;
-                            color: #007bff;
-                        }
-                        a:hover {
-                            text-decoration: underline;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>Directory Listing</h1>
-                    <ul>${ fileList }</ul>
-                </body>
-            </html>
-            `;
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(html);
+            res.end(html.replace('${ fileList }', fileList));
         });
     }
 

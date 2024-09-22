@@ -46,7 +46,6 @@ export class xBuildError extends BaseError {
 
     /**
      * Set external stack
-     * Todo
      */
 
     setStack(stack: string): void {

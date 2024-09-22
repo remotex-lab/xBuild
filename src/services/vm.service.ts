@@ -44,6 +44,7 @@ import { Script, createContext } from 'vm';
  */
 
 export function sandboxExecute(code: string, sandbox: Context = {}) {
+    sandbox.console = console;
     const script = new Script(code);
     const context = createContext(sandbox);
 

@@ -107,8 +107,8 @@ export class ServerProvider {
             this.handleRequest(req, res, () => this.defaultResponse(req, res));
         });
 
-        server.listen(this.config.port, () => {
-            console.log(`${ prefix() }HTTP server is running at http://localhost:${ this.config.port }`);
+        server.listen(this.config.port, this.config.host, () => {
+            console.log(`${ prefix() }HTTP server is running at http://${ this.config.host }:${ this.config.port }`);
         });
     }
 
@@ -135,7 +135,7 @@ export class ServerProvider {
             this.handleRequest(req, res, () => this.defaultResponse(req, res));
         });
 
-        server.listen(this.config.port, () => {
+        server.listen(this.config.port, this.config.host, () => {
             const server = setColor(Colors.CanaryYellow, `https://${ this.config.host }:${ this.config.port }`);
             console.log(
                 `${ prefix() } HTTPS server is running at ${ server }`

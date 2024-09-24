@@ -85,7 +85,7 @@ export class esBuildError extends BaseError {
         this.blockCode = formatErrorCode({
             line: location.line,
             name: null,
-            column: location.column,
+            column: location.column + 1,
             source: location.file,
             endLine: location.line + 1,
             startLine: location.line - 1,

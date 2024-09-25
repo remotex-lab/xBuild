@@ -23,8 +23,8 @@ import type {
  */
 
 import { TypesError } from '@errors/types.error';
-import { resolve, relative, dirname } from 'path';
 import { prefix } from '@components/banner.component';
+import { resolve, relative, dirname, parse } from 'path';
 import { Colors, setColor } from '@components/colors.component';
 import { extractEntryPoints } from '@components/entry-points.component';
 import {
@@ -251,12 +251,13 @@ export class TypeScriptProvider {
     private getRelativePathToOutDir(sourceFile: string, resolvedTargetFile: string): string {
         sourceFile = resolve(sourceFile).replace(resolve(this.options.rootDir ?? ''), '.');
         const relativePath = relative(dirname(sourceFile), resolvedTargetFile).replace(/\\/g, '/');
+        const parsePath = parse(relativePath);
 
-        if (!relativePath.startsWith('..')) {
-            return './' + relativePath;
+        if (!parsePath.dir.startsWith('..')) {
+            parsePath.dir = `./${ parsePath.dir }`;
         }
 
-        return relativePath;
+        return `${ parsePath.dir }/${ parsePath.name }`;
     }
 
     /**

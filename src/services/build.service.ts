@@ -10,7 +10,7 @@ import type { ConfigurationInterface } from '@configuration/interfaces/configura
  * Imports
  */
 
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
 import { build, context } from 'esbuild';
 import { spawn } from '@services/process.service';
 import { xBuildError } from '@errors/xbuild.error';
@@ -20,6 +20,7 @@ import { ServerProvider } from '@providers/server.provider';
 import { PluginsProvider } from '@providers/plugins.provider';
 import { parseIfDefConditionals } from '@plugins/ifdef.plugin';
 import { Colors, setColor } from '@components/colors.component';
+import { resolveAliasPlugin } from '@plugins/resolve-alias.plugin';
 import { analyzeDependencies } from '@services/transpiler.service';
 import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
@@ -93,12 +94,20 @@ export class BuildService {
         if (this.config.dev !== false && (!Array.isArray(this.config.dev) || this.config.dev.length < 1))
             this.config.dev = [ 'index' ];
 
+        const rootDir = resolve(this.typeScriptProvider.options.rootDir ?? '');
+        const paths = this.generatePathAlias(rootDir);
+
         this.pluginsProvider = new PluginsProvider();
         this.pluginsProvider.registerOnEnd(this.end.bind(this));
         this.pluginsProvider.registerOnStart(this.start.bind(this));
         this.pluginsProvider.registerOnLoad((content, loader, args) => {
             if (!args.path.endsWith('.ts'))
                 return;
+
+            if(!this.config.esbuild.bundle) {
+                const sourceFile = dirname(resolve(args.path).replace(rootDir, '.'));
+                content = resolveAliasPlugin(content.toString(), sourceFile, paths, this.config.esbuild.format === 'esm');
+            }
 
             return {
                 loader: 'ts',
@@ -221,6 +230,54 @@ export class BuildService {
         } catch (esbuildError: unknown) {
             this.handleErrors(esbuildError);
         }
+    }
+
+    /**
+     * Generates a path alias object from the TypeScript provider's path options.
+     *
+     * This method processes the `paths` property from the TypeScript provider's options,
+     * which is expected to be an object where each key represents a path alias pattern,
+     * and the corresponding value is an array of paths. The method removes any wildcard
+     * characters (`*`) from both the keys and the first values of the arrays. It also
+     * resolves the paths relative to the specified `rootDir`, returning a simplified
+     * object that maps the cleaned keys to their respective paths.
+     *
+     * The resolved paths will be formatted to use a relative path notation.
+     *
+     * Example:
+     * Given the following paths:
+     * ```typescript
+     * {
+     *   '@core/*': ['src/core/*'],
+     *   '@utils/*': ['src/utils/*']
+     * }
+     * ```
+     * And assuming `rootDir` is set to the base directory of your project, the method
+     * will return:
+     * ```typescript
+     * {
+     *   '@core/': './core/',
+     *   '@utils/': './utils/'
+     * }
+     * ```
+     *
+     * @param {string} rootDir - The root directory to resolve paths against.
+     * @returns {Record<string, string>} An object mapping cleaned path aliases to their respective resolved paths.
+     */
+
+    private generatePathAlias(rootDir: string): Record<string, string> {
+        const paths = this.typeScriptProvider.options.paths;
+        const alias: Record<string, string> = {};
+
+        for (const key in paths) {
+            const valueArray = paths[key];
+            if (valueArray.length > 0) {
+                const newKey = key.replace('*', '');
+                alias[newKey] = resolve(valueArray[0].replace('*', '')).replace(rootDir, '.');
+            }
+        }
+
+        return alias;
     }
 
     /**

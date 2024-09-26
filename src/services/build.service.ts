@@ -272,8 +272,8 @@ export class BuildService {
         for (const key in paths) {
             const valueArray = paths[key];
             if (valueArray.length > 0) {
-                const newKey = key.replace('*', '');
-                alias[newKey] = resolve(valueArray[0].replace('*', '')).replace(rootDir, '.');
+                const newKey = key.replace(/\*/g, '');
+                alias[newKey] = resolve(valueArray[0].replace(/\*/g, '')).replace(rootDir, '.');
             }
         }
 

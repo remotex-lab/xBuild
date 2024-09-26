@@ -506,7 +506,7 @@ export class BuildService {
             if (entryPointsList.includes(file))
                 continue;
 
-            const resolveFile = resolve(file).replace(rootDir + '\\', '');
+            const resolveFile = resolve(file).replace(rootDir, '.');
             const fileName = resolveFile.substring(0, resolveFile.lastIndexOf('.'));
             entryPoints[fileName] = file;
         }

@@ -343,7 +343,7 @@ export class ServerProvider {
                 const ext = extname(file).slice(1) || 'folder';
                 const { icon, color } = fileIcons[ext] || fileIcons.folder;
 
-                return `<li><i class="fas ${ icon }" style="color: ${ color };"></i> <a href="${ fullPath }">${ file }</a></li>`;
+                return `<li><i class="fas ${ icon }" style="color: ${ color };"></i> <a href="/${ fullPath }">${ file }</a></li>`;
             }).join('');
 
             res.writeHead(200, { 'Content-Type': 'text/html' });

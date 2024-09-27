@@ -35,6 +35,12 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
     const cli = yargs(hideBin(argv))
         .command('$0 [file]', 'A versatile JavaScript and TypeScript toolchain build system.', (yargs) => {
             yargs
+                .positional('typeCheck', {
+                    describe: 'Perform type checking',
+                    alias: 'tc',
+                    type: 'boolean',
+                    default: false
+                })
                 .positional('entryPoints', {
                     describe: 'The file entryPoints to build',
                     type: 'string'
@@ -86,7 +92,7 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                     default: 'xbuild.config.ts'
                 })
                 .option('tsconfig', {
-                    alias: 'tc',
+                    alias: 'tsc',
                     describe: 'Set TypeScript configuration file to use',
                     type: 'string',
                     default: 'tsconfig.json'

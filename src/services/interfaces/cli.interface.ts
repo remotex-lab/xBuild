@@ -2,8 +2,11 @@
  * Interface representing the command-line arguments for the build tool.
  *
  * @interface ArgvInterface
- * @property file - The file entryPoints to build.
- * @property dev - Flag indicating if the build is for development.
+ * @property typeCheck - Flag indicating if the tool should perform type checking only.
+ * @property node - Flag indicating if the build is intended for Node.js environment.
+ * @property file - The entry file(s) to build.
+ * @property dev - List of development-related options for the build.
+ * @property debug - List of debugging-related options for the build.
  * @property serve - Flag indicating if an HTTP server should be started for the build folder.
  * @property outdir - The output directory for the build files.
  * @property declaration - Flag indicating if TypeScript declaration files should be generated.
@@ -15,6 +18,7 @@
  */
 
 export interface ArgvInterface {
+    typeCheck: boolean,
     node: boolean,
     file: string,
     dev: Array<string>,

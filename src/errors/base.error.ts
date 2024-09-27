@@ -281,7 +281,7 @@ export abstract class BaseError extends Error {
     private getFilePathWithSourceRoot(position: PositionSourceInterface): string {
         let filePath = position.source;
         if (position.sourceRoot) {
-            filePath = filePath.replace('../', position.sourceRoot) + `#L${ position.line }`;
+            filePath = filePath.replace(/\.\.\//g, position.sourceRoot) + `#L${ position.line }`;
         }
 
         return filePath;

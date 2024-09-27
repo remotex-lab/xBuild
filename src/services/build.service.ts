@@ -272,8 +272,8 @@ export class BuildService {
         for (const key in paths) {
             const valueArray = paths[key];
             if (valueArray.length > 0) {
-                const newKey = key.replace('*', '');
-                alias[newKey] = resolve(valueArray[0].replace('*', '')).replace(rootDir, '.');
+                const newKey = key.replace(/\*/g, '');
+                alias[newKey] = resolve(valueArray[0].replace(/\*/g, '')).replace(rootDir, '.');
             }
         }
 
@@ -506,7 +506,7 @@ export class BuildService {
             if (entryPointsList.includes(file))
                 continue;
 
-            const resolveFile = resolve(file).replace(rootDir + '\\', '');
+            const resolveFile = resolve(file).replace(rootDir, '.');
             const fileName = resolveFile.substring(0, resolveFile.lastIndexOf('.'));
             entryPoints[fileName] = file;
         }

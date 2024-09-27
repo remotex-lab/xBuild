@@ -39,6 +39,12 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                     describe: 'The file entryPoints to build',
                     type: 'string'
                 })
+                .option('typeCheck', {
+                    describe: 'Perform type checking',
+                    alias: 'tc',
+                    type: 'boolean',
+                    default: false
+                })
                 .option('node', {
                     alias: 'n',
                     describe: 'Build for node platform',
@@ -86,7 +92,7 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                     default: 'xbuild.config.ts'
                 })
                 .option('tsconfig', {
-                    alias: 'tc',
+                    alias: 'tsc',
                     describe: 'Set TypeScript configuration file to use',
                     type: 'string',
                     default: 'tsconfig.json'

@@ -42,6 +42,9 @@ async function run() {
     const config = await configuration(args.config, cli);
     const build = new BuildService(config);
 
+    if (args.typeCheck)
+        return build.typeScriptProvider.typeCheck(true);
+
     if (Array.isArray(args.debug)) {
         if (args.debug.length < 1)
             args.debug = [ 'index' ];

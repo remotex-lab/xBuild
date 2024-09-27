@@ -59,18 +59,18 @@
     },
     "devDependencies": {
         "jest": "^29.7.0",
-        "eslint": "^9.10.0",
+        "eslint": "^9.11.1",
         "typescript": "^5.6.2",
-        "typescript-eslint": "^8.5.0",
-        "eslint-plugin-jsdoc": "^50.2.3",
+        "typescript-eslint": "^8.7.0",
+        "eslint-plugin-jsdoc": "^50.3.0",
         "@swc/jest": "^0.2.36",
-        "@types/jest": "^29.5.12",
-        "@types/node": "^22.5.5",
+        "@types/jest": "^29.5.13",
+        "@types/node": "^22.7.4",
         "@remotex-labs/xbuild": "^1.1.1"
     },
     "dependencies": {
         "yargs": "^17.7.2",
-        "esbuild": "^0.23.1",
+        "esbuild": "^0.24.0",
         "@remotex-labs/xmap": "^1.0.4"
     }
 }

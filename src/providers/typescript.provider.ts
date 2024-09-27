@@ -441,7 +441,7 @@ export class TypeScriptProvider {
                 const errorMsg = setColor(Colors.Red, 'error', this.activeColor);
                 const errorCode = setColor(Colors.Gray, `TS${ diagnostic.code }`, this.activeColor);
 
-                console.log(`${ prefix() } ${ file }:${ position } - ${ errorMsg } ${ errorCode }:${ message }`);
+                console.error(`${ prefix() } ${ file }:${ position } - ${ errorMsg } ${ errorCode }:${ message }`);
             } else {
                 console.error(flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
             }

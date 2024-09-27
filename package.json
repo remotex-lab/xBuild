@@ -52,7 +52,7 @@
         "test": "jest",
         "build": "xBuild",
         "test:coverage": "jest --coverage",
-        "lint": "tsc -noEmit && eslint . -c ./eslint.config.mjs",
+        "lint": "xbuild --tc && eslint . -c ./eslint.config.mjs",
         "ci:test": "jest",
         "ci:clean": "rm -rf ./dist",
         "ci:build": "npm run build"

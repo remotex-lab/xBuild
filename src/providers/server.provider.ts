@@ -30,6 +30,12 @@ import { existsSync, readdir, readFile, readFileSync, stat } from 'fs';
 
 export class ServerProvider {
     /**
+     * Root dir to serve
+     */
+
+    private readonly rootDir: string;
+
+    /**
      * Indicates whether the server is configured to use HTTPS.
      */
 
@@ -64,7 +70,8 @@ export class ServerProvider {
      * This example shows how to create an instance of `ServerProvider` and start the server.
      */
 
-    constructor(config: Serve, private dir: string) {
+    constructor(config: Serve, dir: string) {
+        this.rootDir = resolve(dir);
         this.config = <Required<Serve>> config;
         this.isHttps = this.config.keyfile && this.config.certfile
             ? existsSync(this.config.keyfile) && existsSync(this.config.certfile)
@@ -225,10 +232,15 @@ export class ServerProvider {
      */
 
     private async defaultResponse(req: IncomingMessage, res: ServerResponse): Promise<void> {
-        // Todo optimize this
-        const rootDir = resolve(this.dir);
         const requestPath = req.url === '/' ? '' : req.url?.replace(/^\/+/, '') || '';
-        const fullPath = join(rootDir, requestPath);
+        const fullPath = join(this.rootDir, requestPath);
+
+        if (!fullPath.startsWith(this.rootDir)) {
+            res.statusCode = 403;
+            res.end();
+
+            return;
+        }
 
         try {
             const stats = await this.promisifyStat(fullPath);

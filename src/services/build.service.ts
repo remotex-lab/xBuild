@@ -48,7 +48,7 @@ export class BuildService {
      * Provides TypeScript-related functionality for the build process.
      */
 
-    private typeScriptProvider: TypeScriptProvider;
+    readonly typeScriptProvider: TypeScriptProvider;
 
     /**
      * Keeps track of active development processes spawned during the build.

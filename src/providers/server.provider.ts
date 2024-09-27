@@ -19,6 +19,35 @@ import { Colors, setColor } from '@components/colors.component';
 import { existsSync, readdir, readFile, readFileSync, stat } from 'fs';
 
 /**
+ * A mapping of file extensions to their corresponding icon and color.
+ *
+ * This record associates common file types with a Font Awesome icon class
+ * and a color code for display purposes in a file listing UI. Each file type
+ * is represented by an icon and a color that visually distinguishes it.
+ *
+ * Example:
+ * - HTML files are represented by a code icon (`fa-file-code`) with a color of `#d1a65f`.
+ * - Image files (e.g., PNG, JPG, GIF) share a common image icon (`fa-file-image`) with a color of `#53a8e4`.
+ *
+ * @constant
+ * @type {Record<string, { icon: string, color: string }>}
+ */
+
+const fileIcons: Record<string, { icon: string, color: string }> = {
+    html: { icon: 'fa-file-code', color: '#d1a65f' },
+    css: { icon: 'fa-file-css', color: '#264de4' },
+    js: { icon: 'fa-file-code', color: '#f7df1e' },
+    json: { icon: 'fa-file-json', color: '#b41717' },
+    png: { icon: 'fa-file-image', color: '#53a8e4' },
+    jpg: { icon: 'fa-file-image', color: '#53a8e4' },
+    jpeg: { icon: 'fa-file-image', color: '#53a8e4' },
+    gif: { icon: 'fa-file-image', color: '#53a8e4' },
+    txt: { icon: 'fa-file-alt', color: '#8e8e8e' },
+    folder: { icon: 'fa-folder', color: '#ffb800' }
+};
+
+
+/**
  * Manages the HTTP or HTTPS server based on the provided configuration.
  *
  * The `ServerProvider` class initializes and starts either an HTTP or HTTPS server based on whether SSL certificates
@@ -303,24 +332,18 @@ export class ServerProvider {
             if (err)
                 return this.sendError(res, err);
 
-            const fileIcons: Record<string, { icon: string, color: string }> = {
-                html: { icon: 'fa-file-code', color: '#d1a65f' },
-                css: { icon: 'fa-file-css', color: '#264de4' },
-                js: { icon: 'fa-file-code', color: '#f7df1e' },
-                json: { icon: 'fa-file-json', color: '#b41717' },
-                png: { icon: 'fa-file-image', color: '#53a8e4' },
-                jpg: { icon: 'fa-file-image', color: '#53a8e4' },
-                jpeg: { icon: 'fa-file-image', color: '#53a8e4' },
-                gif: { icon: 'fa-file-image', color: '#53a8e4' },
-                txt: { icon: 'fa-file-alt', color: '#8e8e8e' },
-                folder: { icon: 'fa-folder', color: '#ffb800' }
-            };
-
             const fileList = files.map(file => {
+                if (file.match(/[^A-Za-z0-9_\/\\.-]/))
+                    return;
+
+                const fullPath = join(requestPath, file);
+                if (fullPath.match(/[^A-Za-z0-9_\/\\.-]/))
+                    return;
+
                 const ext = extname(file).slice(1) || 'folder';
                 const { icon, color } = fileIcons[ext] || fileIcons.folder;
 
-                return `<li><i class="fas ${ icon }" style="color: ${ color };"></i> <a href="${ join(requestPath, file) }">${ file }</a></li>`;
+                return `<li><i class="fas ${ icon }" style="color: ${ color };"></i> <a href="${ fullPath }">${ file }</a></li>`;
             }).join('');
 
             res.writeHead(200, { 'Content-Type': 'text/html' });

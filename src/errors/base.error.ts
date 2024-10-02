@@ -226,27 +226,30 @@ export abstract class BaseError extends Error {
      */
 
     protected getFormattedStackEntries(stackEntries: StackEntryInterface[], sourceMap: SourceService): string[] {
-        const formattedEntries: string[] = [];
+        return stackEntries.map((item) => {
+            const formattedLine = (at: string, file: string, line: number, column: number) =>
+                `at ${at} ${setColor(Colors.DarkGray, file)} ${setColor(Colors.Gray, `[${line}:${column}]`)}`;
 
-        stackEntries.forEach((item) => {
+            if (item.file.includes('node_module')) {
+                return formattedLine(item.at, item.file, item.line, item.column);
+            }
+
             const position = resolveSourcePosition(item, sourceMap);
-
             if (position) {
                 this.updateBlockCodeIfNecessary(position);
 
+                const name = position.name ? `${position.name} ` : '';
                 const filePath = this.getFilePathWithSourceRoot(position);
-                const name = position.name ? `${ position.name } ` : '';
-                formattedEntries.push(
-                    `at ${ name }${ setColor(Colors.DarkGray, filePath) } ${ setColor(Colors.Gray, `[${ position.line }:${ position.column }]`) }`
-                );
-            } else if (!item.executor && !item.at.includes('anonymous')) {
-                formattedEntries.push(
-                    `at ${ item.at } ${ setColor(Colors.DarkGray, item.file) } ${ setColor(Colors.Gray, `[${ item.line }:${ item.column }]`) }`
-                );
-            }
-        });
 
-        return formattedEntries;
+                return formattedLine(name, filePath, position.line, position.column);
+            }
+
+            if (!item.executor && !item.at.includes('anonymous')) {
+                return formattedLine(item.at, item.file, item.line, item.column);
+            }
+
+            return '';
+        }).filter(entry => entry);
     }
 
     /**

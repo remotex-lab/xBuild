@@ -69,3 +69,29 @@ run().catch((error: Error | BaseError) => {
 
     console.log((new VMRuntimeError(error)).toString());
 });
+
+/**
+ * Todo
+ * 1. fix select the correct source map
+ * 2. support get build format cjs or esm from cli for build esm and cjs same config
+ * 3. get outdir form cli smae
+ * 4.
+ *
+ * "module": "./dist/esm/index.js"
+ *   "exports": {
+ *     "./package.json": "./package.json",
+ *     ".": {
+ *       "import": {
+ *         "types": "./dist/esm/index.d.ts",
+ *         "default": "./dist/esm/index.js"
+ *       },
+ *       "require": {
+ *         "types": "./dist/commonjs/index.d.ts",
+ *         "default": "./dist/commonjs/index.js"
+ *       }
+ *     }
+ *   },
+ * add "type": "module",
+ *
+ * fix dev filename type to ignore .ts/.js
+ */

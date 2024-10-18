@@ -24,6 +24,7 @@ const config: xBuildConfig = {
     esbuild: {
         bundle: true,
         minify: true,
+        format: 'esm',
         target: [ `node${ version.slice(1) }` ],
         platform: 'node',
         packages: 'external',

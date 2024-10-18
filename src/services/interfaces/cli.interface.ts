@@ -1,4 +1,10 @@
 /**
+ * Import will remove at compile time
+ */
+
+import type { Format } from 'esbuild';
+
+/**
  * Interface representing the command-line arguments for the build tool.
  *
  * @interface ArgvInterface
@@ -15,6 +21,7 @@
  * @property tsconfig - Path to the TypeScript configuration file to use.
  * @property minify - Flag indicating if the code should be minified.
  * @property bundle - Flag indicating if the code should be bundled.
+ * @property format - Defines the formats for the build output.
  */
 
 export interface ArgvInterface {
@@ -30,5 +37,6 @@ export interface ArgvInterface {
     config: string,
     tsconfig: string,
     minify: boolean,
-    bundle: boolean
+    bundle: boolean,
+    format: Format
 }

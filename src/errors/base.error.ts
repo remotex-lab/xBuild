@@ -8,8 +8,9 @@ import type { PositionSourceInterface, StackEntryInterface } from '@remotex-labs
  * Imports
  */
 
-import { join } from 'path';
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { setColor, Colors } from '@components/colors.component';
 import { SourceService, highlightCode, formatErrorCode, parseErrorStack } from '@remotex-labs/xmap';
 
@@ -17,8 +18,8 @@ import { SourceService, highlightCode, formatErrorCode, parseErrorStack } from '
  * Constants
  */
 
-export const dirname = __dirname;
-export const sourceMapData = readFileSync(join(dirname, 'index.js.map'));
+export const path = fileURLToPath(dirname(import.meta.url));
+export const sourceMapData = readFileSync(join(path, 'index.js.map'));
 export const defaultSourceService = new SourceService(JSON.parse(sourceMapData.toString()));
 
 /**

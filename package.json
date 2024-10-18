@@ -1,5 +1,6 @@
 {
     "name": "@remotex-labs/xbuild",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "author": "Garefild",

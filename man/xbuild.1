@@ -1,4 +1,4 @@
-.TH INDEX.TS 1 "Version: 0.0.2-beta.3" "JavaScript and TypeScript Toolchain"
+.TH INDEX.TS 1 "JavaScript and TypeScript Toolchain"
 .SH NAME
 index.ts \- A versatile JavaScript and TypeScript toolchain build system.
 .SH SYNOPSIS
@@ -18,16 +18,22 @@ The file entryPoints to build (string).
 Show help (boolean).
 .TP
 .B -n, --node
-Build for node platform (boolean) [default: false].
+Build for Node.js platform (boolean) [default: false].
 .TP
 .B -d, --dev
-Array entryPoints to run as development in Node.js (array).
+Array of entryPoints to run as development in Node.js (array) [default: false].
 .TP
 .B --debug, --db
-Array entryPoints to run in Node.js with debug state (array).
+Array of entryPoints to run in Node.js with debug state (array).
 .TP
 .B -s, --serve
 Serve the build folder over HTTP (boolean) [default: false].
+.TP
+.B --port
+Port number for serving the build folder (number) [default: 3000].
+.TP
+.B --host
+Host for serving the build folder (string) [default: "localhost"].
 .TP
 .B -o, --outdir
 Output directory (string) [default: "dist"].
@@ -41,20 +47,26 @@ Watch for file changes (boolean) [default: false].
 .B -c, --config
 Build configuration file (js/ts) (string) [default: "xbuild.config.ts"].
 .TP
-.B --tsconfig, --tc
+.B --tsconfig, --tsc
 Set TypeScript configuration file to use (string) [default: "tsconfig.json"].
 .TP
 .B -m, --minify
-Minify the code (boolean) [default: false].
+Minify the code (boolean) [default: true].
 .TP
 .B -b, --bundle
-Bundle the code (boolean) [default: false].
+Bundle the code (boolean) [default: true].
 .TP
 .B --noTypeChecker, --ntc
 Skip TypeScript type checking (boolean) [default: false].
 .TP
 .B --buildOnError, --boe
 Continue building even if there are TypeScript type errors (boolean) [default: false].
+.TP
+.B --typeCheck, --tc
+Perform TypeScript type checking (boolean) [default: false].
+.TP
+.B --format, --f
+Defines the format for the build output ('cjs', 'esm', 'iif').
 .TP
 .B -v, --version
 Show version number (boolean) [default: false].
@@ -64,9 +76,9 @@ Show version number (boolean) [default: false].
 .nf
 index.ts myEntryPoint.js --dev
 .fi
-.B Serve the built files:
+.B Serve the built files on a custom port:
 .nf
-index.ts --serve
+index.ts --serve --port 4000
 .fi
 .B Build with a custom output directory:
 .nf
@@ -74,10 +86,10 @@ index.ts --outdir customDir
 .fi
 
 .SH SEE ALSO
-For more details, visit the project's documentation at [insert documentation URL here].
+For more details, visit the project's documentation at https://github.com/remotex-lab/xBuild.
 
 .SH AUTHOR
-Developed by [Your Name or Organization].
+Developed by Garefild.
 
 .SH LICENSE
-This project is licensed under [Your License].
+This project is licensed under MPL-2.0 license.

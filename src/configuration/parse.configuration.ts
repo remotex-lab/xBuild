@@ -8,6 +8,7 @@ import type { ConfigurationInterface, ModuleInterface } from '@configuration/int
  * Imports
  */
 
+import { createRequire } from 'module';
 import { SourceService } from '@remotex-labs/xmap';
 import { sandboxExecute } from '@services/vm.service';
 import { VMRuntimeError } from '@errors/vm-runtime.error';
@@ -114,6 +115,7 @@ export async function parseConfigurationFile(file: string): Promise<Configuratio
      */
 
     const module: ModuleInterface = { exports: {} };
+    const require = createRequire(import.meta.url);
     const source = new SourceService(JSON.parse(atob(sourceMap)));
 
     try {

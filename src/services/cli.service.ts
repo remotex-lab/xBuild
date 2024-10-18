@@ -42,14 +42,12 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                 .option('typeCheck', {
                     describe: 'Perform type checking',
                     alias: 'tc',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('node', {
                     alias: 'n',
                     describe: 'Build for node platform',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('dev', {
                     alias: 'd',
@@ -64,26 +62,22 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                 .option('serve', {
                     alias: 's',
                     describe: 'Serve the build folder over HTTP',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('outdir', {
                     alias: 'o',
                     describe: 'Output directory',
-                    type: 'string',
-                    default: 'dist'
+                    type: 'string'
                 })
                 .option('declaration', {
                     alias: 'de',
                     describe: 'Add TypeScript declarations',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('watch', {
                     alias: 'w',
                     describe: 'Watch for file changes',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('config', {
                     alias: 'c',
@@ -100,26 +94,22 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                 .option('minify', {
                     alias: 'm',
                     describe: 'Minify the code',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('bundle', {
                     alias: 'b',
                     describe: 'Bundle the code',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('noTypeChecker', {
                     alias: 'ntc',
                     describe: 'Skip TypeScript type checking',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('buildOnError', {
                     alias: 'boe',
                     describe: 'Continue building even if there are TypeScript type errors',
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 })
                 .option('version', {
                     alias: 'v',

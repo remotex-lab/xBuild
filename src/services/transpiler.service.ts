@@ -119,6 +119,7 @@ export async function analyzeDependencies(entryPoint: EntryPoints, platform: 'br
         write: false, // Prevent writing output files
         metafile: true, // Generate a metafile to analyze dependencies
         platform: platform,
+        packages: 'external',
         logLevel: 'silent',
         outdir: 'dist'
     });

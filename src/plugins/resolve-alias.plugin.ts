@@ -37,8 +37,7 @@ import { relative } from 'path';
  */
 
 export function resolveAliasPlugin(content: string, sourceFile: string, paths: Record<string, string>, esm: boolean): string {
-    const regex = /(?:import|export)\s.*?\sfrom\s+['"]([^'"]+)['"]/g;
-
+    const importExportRegex = /(?:import|export)\s.*?\sfrom\s+['"]([^'"]+)['"]/g;
     for (const key in paths) {
         let relativePath = relative(sourceFile, paths[key]).replace(/\\/g, '/');
         if (!relativePath.startsWith('..')) {
@@ -47,9 +46,11 @@ export function resolveAliasPlugin(content: string, sourceFile: string, paths: R
 
         content = content.replaceAll(key, `${ relativePath }/`);
         if (esm) {
-            content = content.replace(regex, (match, p1) => {
-                return match.replace(p1, p1.endsWith('.js') ? p1 : `${ p1 }.js`);
-            });
+            content = content.replace(importExportRegex, (match, p1) =>
+                (p1.startsWith('../') || p1.startsWith('./')) && !p1.endsWith('.js')
+                    ? match.replace(p1, `${p1}.js`)
+                    : match
+            );
         }
     }
 

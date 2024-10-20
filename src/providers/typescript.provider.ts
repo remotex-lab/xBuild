@@ -156,6 +156,7 @@ export class TypeScriptProvider {
         const files = Object.values(extractEntryPoints(entryPoints));
         const program = createProgram(files, {
             ...this.options,
+            rootDir: this.options.baseUrl,
             declaration: true,
             skipLibCheck: true,
             emitDeclarationOnly: true
@@ -221,12 +222,12 @@ export class TypeScriptProvider {
         let path = undefined;
         const resolvedModule = resolveModuleName(specifierText, options.baseUrl!, options, sys);
 
-        if (resolvedModule.resolvedModule && options.rootDir) {
+        if (resolvedModule.resolvedModule && options.baseUrl) {
             if (resolvedModule.resolvedModule.resolvedFileName.includes('node_modules'))
                 return path;
 
             path = resolve(resolvedModule.resolvedModule.resolvedFileName).replace(
-                resolve(options.rootDir), '.'
+                resolve(options.baseUrl), '.'
             );
         }
 
@@ -249,7 +250,7 @@ export class TypeScriptProvider {
      */
 
     private getRelativePathToOutDir(sourceFile: string, resolvedTargetFile: string): string {
-        sourceFile = resolve(sourceFile).replace(resolve(this.options.rootDir ?? ''), '.');
+        sourceFile = resolve(sourceFile).replace(resolve(this.options.baseUrl ?? ''), '.');
         const relativePath = relative(dirname(sourceFile), resolvedTargetFile).replace(/\\/g, '/');
         const parsePath = parse(relativePath);
 

@@ -94,7 +94,7 @@ export class BuildService {
         if (this.config.dev !== false && (!Array.isArray(this.config.dev) || this.config.dev.length < 1))
             this.config.dev = [ 'index' ];
 
-        const rootDir = resolve(this.typeScriptProvider.options.rootDir ?? '');
+        const rootDir = resolve(this.typeScriptProvider.options.baseUrl ?? '');
         const paths = this.generatePathAlias(rootDir);
 
         this.pluginsProvider = new PluginsProvider();
@@ -104,7 +104,7 @@ export class BuildService {
             if (!args.path.endsWith('.ts'))
                 return;
 
-            if(!this.config.esbuild.bundle) {
+            if (!this.config.esbuild.bundle) {
                 const sourceFile = dirname(resolve(args.path).replace(rootDir, '.'));
                 content = resolveAliasPlugin(content.toString(), sourceFile, paths, this.config.esbuild.format === 'esm');
             }
@@ -491,7 +491,7 @@ export class BuildService {
     private async processEntryPoints(): Promise<void> {
         const esbuild = this.config.esbuild;
         const meta = await analyzeDependencies(esbuild.entryPoints, esbuild.platform);
-        const rootDir = resolve(this.typeScriptProvider.options.rootDir ?? '');
+        const rootDir = resolve(this.typeScriptProvider.options.baseUrl ?? '');
 
         // it pointer and change the esbuild.entryPoints if is object value from configuration !!
         let entryPoints = extractEntryPoints(esbuild.entryPoints);

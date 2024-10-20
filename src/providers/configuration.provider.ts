@@ -6,7 +6,10 @@ import type { Argv } from 'yargs';
 import type { BuildOptions } from 'esbuild';
 import type { ParsedCommandLine } from 'typescript';
 import type { ArgvInterface } from '@services/interfaces/cli.interface';
-import type { ConfigurationInterface, PartialDeep } from '@configuration/interfaces/configuration.interface';
+import type {
+    ConfigurationInterface,
+    PartialDeepConfigurationsType
+} from '@configuration/interfaces/configuration.interface';
 
 /**
  * Imports
@@ -48,11 +51,11 @@ const defaultTsConfig = JSON.stringify({
  * @throws Error - Throws an error if critical configuration properties are missing or invalid.
  */
 
-function parseCliArgs(cli: Argv<ArgvInterface>): PartialDeep<ConfigurationInterface> {
+function parseCliArgs(cli: Argv<ArgvInterface>): PartialDeepConfigurationsType {
     const args = <ArgvInterface> cli.argv;
 
     // Helper function to filter out undefined values
-    const pickDefined = <T extends object>(obj: T): PartialDeep<ConfigurationInterface> => Object.fromEntries(
+    const pickDefined = <T extends object>(obj: T): PartialDeepConfigurationsType => Object.fromEntries(
         Object.entries(obj).filter(([ , value ]) => value !== undefined)
     );
 
@@ -67,14 +70,14 @@ function parseCliArgs(cli: Argv<ArgvInterface>): PartialDeep<ConfigurationInterf
         format: args.format
     });
 
-    return <PartialDeep<ConfigurationInterface>> {
+    return <PartialDeepConfigurationsType> {
         ...pickDefined({
             dev: args.dev,
             watch: args.watch,
             declaration: args.declaration,
             serve: args.serve ? { active: args.serve } : { undefined }
         }),
-        ... { esbuild: esbuildConfig }
+        ...{ esbuild: esbuildConfig }
     };
 }
 
@@ -120,29 +123,38 @@ export function tsConfiguration(options: BuildOptions): ParsedCommandLine {
  * @throws Error - Throws an error if the `entryPoints` property in the final configuration is undefined.
  */
 
-export async function configuration(configFile: string, cli: Argv<ArgvInterface>): Promise<ConfigurationInterface> {
+export async function configuration(configFile: string, cli: Argv<ArgvInterface>): Promise<Array<ConfigurationInterface>> {
     const cliConfig = parseCliArgs(cli);
-    const userConfig = existsSync(configFile) ? await parseConfigurationFile(configFile) : <PartialDeep<ConfigurationInterface>> {};
+    const userConfig = existsSync(configFile) ? await parseConfigurationFile(configFile) : {};
 
-    const mergedConfig: ConfigurationInterface = {
-        ...defaultConfiguration,
-        ...userConfig,
-        ...cliConfig,
-        esbuild: {
-            ...defaultConfiguration.esbuild,
-            ...userConfig?.esbuild,
-            ...cliConfig.esbuild
-        },
-        serve: {
-            ...defaultConfiguration.serve,
-            ...userConfig.serve,
-            ...cliConfig.serve
+    // Check if userConfig is an array and handle accordingly
+    const userConfigs: Array<ConfigurationInterface> = Array.isArray(userConfig) ? userConfig : [ userConfig ];
+    const defaultUserConfig = userConfigs[0];
+
+    return userConfigs.flatMap<ConfigurationInterface>((userConfigEntry) => {
+        const mergedConfig: ConfigurationInterface = {
+            ...defaultConfiguration,
+            ...defaultUserConfig,
+            ...userConfigEntry,
+            ...cliConfig,
+            esbuild: {
+                ...defaultConfiguration.esbuild,
+                ...defaultUserConfig?.esbuild,
+                ...userConfigEntry?.esbuild,
+                ...cliConfig.esbuild
+            },
+            serve: {
+                ...defaultConfiguration.serve,
+                ...defaultUserConfig.serve,
+                ...userConfigEntry.serve,
+                ...cliConfig.serve
+            }
+        };
+
+        if (!mergedConfig.esbuild.entryPoints) {
+            throw new xBuildError('entryPoints cannot be undefined.');
         }
-    };
 
-    if (!mergedConfig.esbuild.entryPoints) {
-        throw new xBuildError('entryPoints cannot be undefined.');
-    }
-
-    return mergedConfig;
+        return mergedConfig;
+    });
 }

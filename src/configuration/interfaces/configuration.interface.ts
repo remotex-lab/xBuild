@@ -335,3 +335,54 @@ interface ExportedConfigurationInterface extends ConfigurationInterface {
  */
 
 export type xBuildConfig = PartialDeep<ExportedConfigurationInterface>;
+
+/**
+ * Represents a partially deep configuration type based on the `ConfigurationInterface`.
+ *
+ * This type is used to define configurations that may have some properties
+ * missing or undefined. It leverages the `PartialDeep` utility type to allow
+ * for flexibility in configuration management.
+ */
+
+export type PartialDeepConfigurationsType = PartialDeep<ConfigurationInterface>;
+
+/**
+ * Defines the possible types for configurations.
+ *
+ * This type can either be a single instance of `PartialDeepConfigurationsType`
+ * or an array of such instances. This flexibility allows for configurations
+ * to be specified as a single object or as multiple objects, enabling
+ * support for various build setups.
+ *
+ * @example
+ * // A single configuration object
+ * const config: ConfigurationsType = {
+ *     esbuild: {
+ *         bundle: true,
+ *         outdir: 'dist'
+ *     }
+ * };
+ *
+ * @example
+ * ```ts
+ * // An array of configuration objects
+ * const configs: ConfigurationsType = [
+ *     {
+ *         esbuild: {
+ *             bundle: true,
+ *             outdir: 'dist/esm'
+ *         }
+ *     },
+ *     {
+ *         esbuild: {
+ *             bundle: false,
+ *             outdir: 'dist/cjs',
+ *             declaration: false,
+ *             noTypeChecker: true
+ *         }
+ *     }
+ * ];
+ * ```
+ */
+
+export type ConfigurationsType = PartialDeepConfigurationsType | Array<PartialDeepConfigurationsType>;

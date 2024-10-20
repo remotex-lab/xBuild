@@ -63,7 +63,8 @@ function parseCliArgs(cli: Argv<ArgvInterface>): PartialDeep<ConfigurationInterf
         tsconfig: args.tsconfig,
         entryPoints: args.file ? [ args.file ] : undefined,
         target: args.node ? [ `node${ process.version.slice(1) }` ] : undefined,
-        platform: args.node ? 'node' : undefined
+        platform: args.node ? 'node' : undefined,
+        format: args.format
     });
 
     return <PartialDeep<ConfigurationInterface>> {

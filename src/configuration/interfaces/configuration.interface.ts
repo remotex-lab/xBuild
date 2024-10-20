@@ -315,7 +315,7 @@ export interface ConfigurationInterface {
      * @public
      */
 
-    define: Record<string, unknown>
+    define: Record<string, unknown>;
 }
 
 interface ExportedConfigurationInterface extends ConfigurationInterface {

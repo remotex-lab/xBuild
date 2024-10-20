@@ -111,6 +111,11 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
                     describe: 'Continue building even if there are TypeScript type errors',
                     type: 'boolean'
                 })
+                .option('format', {
+                    alias: 'f',
+                    describe: 'Defines the format for the build output (\'cjs\' | \'esm\' | \'iif\').',
+                    type: 'string'
+                })
                 .option('version', {
                     alias: 'v',
                     describe: 'Show version number',

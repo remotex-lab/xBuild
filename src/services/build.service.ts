@@ -25,6 +25,7 @@ import { analyzeDependencies } from '@services/transpiler.service';
 import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
+import { packageTypeComponents } from '@components/package-type.components';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -367,7 +368,9 @@ export class BuildService {
      */
 
     private async build(): Promise<BuildContext | SameShape<unknown, unknown> | BuildResult> {
+        packageTypeComponents(this.config);
         const esbuild = this.config.esbuild;
+
         if (this.config.hooks) {
             this.pluginsProvider.registerOnEnd(this.config.hooks.onEnd);
             this.pluginsProvider.registerOnLoad(this.config.hooks.onLoad);

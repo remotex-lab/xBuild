@@ -3,8 +3,8 @@
  */
 
 import type { ChildProcessWithoutNullStreams } from 'child_process';
-import type { BuildContext, BuildResult, Message, Metafile, SameShape } from 'esbuild';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
+import type { BuildContext, BuildResult, Message, Metafile, PluginBuild, SameShape } from 'esbuild';
 
 /**
  * Imports
@@ -449,15 +449,14 @@ export class BuildService {
      * @private
      */
 
-    private async start() {
+    private async start(build: PluginBuild) {
         try {
-            console.log(`${ prefix() } StartBuild`);
+            console.log(`${ prefix() } StartBuild ${ build.initialOptions.outdir }`);
             if (!this.config.noTypeChecker)
                 this.typeScriptProvider.typeCheck(this.config.buildOnError);
 
             if (this.config.declaration)
                 this.typeScriptProvider.generateDeclarations(this.config.esbuild.entryPoints);
-
         } finally {
             while (this.activePossess.length > 0) {
                 const element = this.activePossess.pop();
@@ -478,6 +477,7 @@ export class BuildService {
 
     private async end(result: BuildResult) {
         if (result.errors.length > 0) {
+            // todo Duplicate error in the watch process.
             return;
         }
 
@@ -491,7 +491,6 @@ export class BuildService {
                 `${ prefix() } ${ setColor(Colors.CanaryYellow, output) }: ${ setColor(Colors.BurntOrange, size.toString()) } bytes`
             );
         });
-        console.log('\n');
 
         if (this.config.dev) {
             this.spawnDev(<Metafile> result.metafile, <Array<string>> this.config.dev);

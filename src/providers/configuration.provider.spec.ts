@@ -300,7 +300,7 @@ describe('configuration', () => {
         });
 
         const config = await configuration(mockConfigFilePath, mockArgv);
-        expect(config).toEqual({
+        expect(config).toEqual([{
             ...defaultConfig,
             esbuild: {
                 ...defaultConfig.esbuild,
@@ -308,7 +308,7 @@ describe('configuration', () => {
                 target: [ `node${ process.version.slice(1) }` ],
                 platform: 'node'
             }
-        });
+        }]);
     });
 
     /**

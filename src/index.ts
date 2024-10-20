@@ -38,25 +38,29 @@ console.log(bannerComponent());
 async function run() {
     const cli = argvParser(process.argv);
     const args = <ArgvInterface> cli.argv;
+    const configs = await configuration(args.config, cli);
 
-    const config = await configuration(args.config, cli);
-    const build = new BuildService(config);
+    for (const config of configs) {
+        const build = new BuildService(config);
+        if (args.typeCheck)
+            return build.typeScriptProvider.typeCheck(true);
 
-    if (args.typeCheck)
-        return build.typeScriptProvider.typeCheck(true);
+        if (Array.isArray(args.debug)) {
+            if (args.debug.length < 1)
+                args.debug = [ 'index' ];
 
-    if (Array.isArray(args.debug)) {
-        if (args.debug.length < 1)
-            args.debug = [ 'index' ];
+            await build.runDebug(args.debug);
+            continue;
+        }
 
-        return await build.runDebug(args.debug);
+        if (args.serve || config.serve.active) {
+            console.log('x');
+            await build.serve();
+            continue;
+        }
+
+        await build.run();
     }
-
-    if (args.serve) {
-        return await build.serve();
-    }
-
-    await build.run();
 }
 
 /**

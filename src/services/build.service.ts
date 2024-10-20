@@ -52,7 +52,6 @@ export class BuildService {
 
     /**
      * Keeps track of active development processes spawned during the build.
-     *
      * This property holds an array of `ChildProcessWithoutNullStreams` instances that represent Node.js processes spawned
      * for running development tasks. These processes are used to handle development builds or runtime tasks and are managed
      * by the `BuildService` class to ensure they are properly started and stopped.
@@ -80,45 +79,25 @@ export class BuildService {
     /**
      * Initializes the build service with the provided configuration.
      *
-     * The constructor sets up the TypeScript provider, suppresses esbuild logging, and configures development modes.
+     * The constructor configures the TypeScript provider, suppresses esbuild logging,
+     * sets up development modes, and registers the necessary plugins.
      *
      * @param config - The configuration object for the build process, including esbuild and TypeScript settings.
      */
 
     constructor(private config: ConfigurationInterface) {
         this.config.esbuild.logLevel = 'silent';
+        this.pluginsProvider = new PluginsProvider();
         this.typeScriptProvider = new TypeScriptProvider(
             tsConfiguration(this.config.esbuild), this.config.esbuild.outdir ?? 'dist'
         );
 
-        if (this.config.dev !== false && (!Array.isArray(this.config.dev) || this.config.dev.length < 1))
-            this.config.dev = [ 'index' ];
-
-        const rootDir = resolve(this.typeScriptProvider.options.baseUrl ?? '');
-        const paths = this.generatePathAlias(rootDir);
-
-        this.pluginsProvider = new PluginsProvider();
-        this.pluginsProvider.registerOnEnd(this.end.bind(this));
-        this.pluginsProvider.registerOnStart(this.start.bind(this));
-        this.pluginsProvider.registerOnLoad((content, loader, args) => {
-            if (!args.path.endsWith('.ts'))
-                return;
-
-            if (!this.config.esbuild.bundle) {
-                const sourceFile = dirname(resolve(args.path).replace(rootDir, '.'));
-                content = resolveAliasPlugin(content.toString(), sourceFile, paths, this.config.esbuild.format === 'esm');
-            }
-
-            return {
-                loader: 'ts',
-                contents: parseIfDefConditionals(content.toString(), this.config.define)
-            };
-        });
+        this.configureDevelopmentMode();
+        this.setupPlugins();
     }
 
     /**
      * Runs the build process in debug mode for the specified entry points.
-     *
      * This method temporarily disables development and watch mode, initiates the build process, and spawns development processes
      * for the specified entry points. If any errors occur during the build, they are handled appropriately.
      *
@@ -159,7 +138,6 @@ export class BuildService {
 
     /**
      * Serves the project and watches for changes.
-     *
      * This method starts the development server using the `ServerProvider`, builds the project using esbuild,
      * and watches for file changes to automatically rebuild as needed. It initializes the server and invokes
      * the build process, enabling continuous development mode.
@@ -197,7 +175,6 @@ export class BuildService {
 
     /**
      * Executes the build process.
-     *
      * This method performs the build and handles any errors that occur. If watching or development mode is enabled,
      * it starts watching for changes. It logs errors that are not related to TypeScript.
      *
@@ -233,8 +210,54 @@ export class BuildService {
     }
 
     /**
-     * Generates a path alias object from the TypeScript provider's path options.
+     * Configures the development mode by ensuring that `config.dev` is set properly.
+     */
+
+    private configureDevelopmentMode(): void {
+        if (this.config.dev !== false && (!Array.isArray(this.config.dev) || this.config.dev.length < 1)) {
+            this.config.dev = [ 'index' ];
+        }
+    }
+
+    /**
+     * Sets up the plugins provider and registers the plugin hooks.
+     */
+
+    private setupPlugins(): void {
+        const rootDir = resolve(this.typeScriptProvider.options.baseUrl ?? '');
+        const paths = this.generatePathAlias(rootDir);
+
+        this.registerPluginHooks(paths, rootDir);
+    }
+
+    /**
+     * Registers the plugin hooks for start, end, and load events.
      *
+     * @param paths - The resolved path aliases.
+     * @param rootDir - The root directory for resolving paths.
+     */
+
+    private registerPluginHooks(paths: Record<string, string>, rootDir: string): void {
+        this.pluginsProvider.registerOnEnd(this.end.bind(this));
+        this.pluginsProvider.registerOnStart(this.start.bind(this));
+
+        this.pluginsProvider.registerOnLoad((content, loader, args) => {
+            if (!args.path.endsWith('.ts')) return;
+
+            if (!this.config.esbuild.bundle) {
+                const sourceFile = dirname(resolve(args.path).replace(rootDir, '.'));
+                content = resolveAliasPlugin(content.toString(), sourceFile, paths, this.config.esbuild.format === 'esm');
+            }
+
+            return {
+                loader: 'ts',
+                contents: parseIfDefConditionals(content.toString(), this.config.define)
+            };
+        });
+    }
+
+    /**
+     * Generates a path alias object from the TypeScript provider's path options.
      * This method processes the `paths` property from the TypeScript provider's options,
      * which is expected to be an object where each key represents a path alias pattern,
      * and the corresponding value is an array of paths. The method removes any wildcard
@@ -282,7 +305,6 @@ export class BuildService {
 
     /**
      * Handles errors during the build process.
-     *
      * This method processes and logs errors that occur during the esbuild process. It specifically filters out
      * errors related to TypeScript (`TypesError`) to prevent them from being logged, while logging all other errors
      * to the console. The error object is assumed to contain a list of messages, each with detailed information.
@@ -337,7 +359,6 @@ export class BuildService {
 
     /**
      * Builds the project based on the configuration.
-     *
      * Depending on the configuration, this method either uses esbuild's `context` for watching or `build` for a one-time build.
      *
      * @returns A promise that resolves with the build context or result.
@@ -375,8 +396,7 @@ export class BuildService {
     }
 
     /**
-     * Manages development processes for specified entry points.
-     *
+     * Manages development processes for specified entry points.*
      * This method spawns development processes for each file in the metafile that matches any of the specified entry points.
      * It enables features like source maps and optional debugging mode for each spawned process.
      *
@@ -424,7 +444,6 @@ export class BuildService {
 
     /**
      * Starts the build process and type checking.
-     *
      * This method performs initial setup for the build and ensures that any child processes are terminated properly.
      *
      * @private
@@ -450,7 +469,6 @@ export class BuildService {
 
     /**
      * Finalizes the build process and logs results.
-     *
      * This method handles the end of the build process, logs build results, and processes development files if applicable.
      *
      * @param result - The result object from the build process.
@@ -482,7 +500,6 @@ export class BuildService {
 
     /**
      * Processes and updates entry points based on project dependencies.
-     *
      * This method analyzes the project's dependencies and adjusts entry points configuration as needed.
      *
      * @private

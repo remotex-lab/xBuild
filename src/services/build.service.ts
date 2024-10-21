@@ -25,7 +25,7 @@ import { analyzeDependencies } from '@services/transpiler.service';
 import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
-import { packageTypeComponents } from '@components/package-type.components';
+import { packageTypeComponent } from '@components/package-type.component';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -368,7 +368,7 @@ export class BuildService {
      */
 
     private async build(): Promise<BuildContext | SameShape<unknown, unknown> | BuildResult> {
-        packageTypeComponents(this.config);
+        packageTypeComponent(this.config);
         const esbuild = this.config.esbuild;
 
         if (this.config.hooks) {
@@ -405,7 +405,7 @@ export class BuildService {
      *
      * @param meta - The metafile containing information about build outputs.
      * This typically includes a mapping of output files and their dependencies.
-     * @param enetryPoint - An array of entry point file names to match against the metafile outputs.
+     * @param entryPoint - An array of entry point file names to match against the metafile outputs.
      * Only files that match these entry points will have development processes spawned.
      * @param debug - A boolean flag to enable debugging mode for spawned processes.
      * If `true`, the processes will start in debug mode with the `--inspect-brk` option. Defaults to `false`.
@@ -433,12 +433,12 @@ export class BuildService {
      * @private
      */
 
-    private spawnDev(meta: Metafile, enetryPoint: Array<string>, debug: boolean = false) {
-        if (!Array.isArray(enetryPoint))
+    private spawnDev(meta: Metafile, entryPoint: Array<string>, debug: boolean = false) {
+        if (!Array.isArray(entryPoint))
             return;
 
         for (const file in meta.outputs) {
-            if (file.includes('map') || !enetryPoint.some(key => file.includes(`/${ key }.`)))
+            if (file.includes('map') || !entryPoint.some(key => file.includes(`/${ key }.`)))
                 continue;
 
             this.activePossess.push(spawn(file, debug));

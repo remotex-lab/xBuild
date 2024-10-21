@@ -61,7 +61,7 @@ import { spawn as process_spawn } from 'child_process';
  * @category Services
  */
 
-export function spawn(filePath: string, debug: boolean): ChildProcessWithoutNullStreams {
+export function spawn(filePath: string, debug: boolean = false): ChildProcessWithoutNullStreams {
     const args = [ '--enable-source-maps', filePath ];
     if (debug)
         args.unshift('--inspect-brk=0.0.0.0:0');

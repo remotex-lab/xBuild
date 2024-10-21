@@ -22,6 +22,8 @@ Run the `xBuild -h` CLI tool with various options to build your typeScript proje
 Command-Line Options
 
 ```bash
+
+
      ______       _ _     _
      | ___ \     (_) |   | |
 __  _| |_/ /_   _ _| | __| |
@@ -29,7 +31,7 @@ __  _| |_/ /_   _ _| | __| |
  >  <| |_/ / |_| | | | (_| |
 /_/\_\____/ \__,_|_|_|\__,_|
 
-Version: 0.0.2-beta.0
+Version: <xBuild version>
 
 index.js [file]
 
@@ -40,24 +42,27 @@ Positionals:
 
 Options:
   -h, --help                  Show help                                [boolean]
-  -n, --node                  Build for node platform [boolean] [default: false]
-  -d, --dev                   Array entryPoints to run for development   [array]
-  -s, --serve                 Serve the build folder over HTTP
-                                                      [boolean] [default: false]
-  -o, --outdir                Output directory        [string] [default: "dist"]
-      --declaration, --de     Add TypeScript declarations
-                                                      [boolean] [default: false]
-  -w, --watch                 Watch for file changes  [boolean] [default: false]
+      --typeCheck, --tc       Perform type checking                    [boolean]
+  -n, --node                  Build for node platform                  [boolean]
+  -d, --dev                   Array entryPoints to run as development in Node.js
+                                                                         [array]
+      --debug, --db           Array entryPoints to run in Node.js with debug sta
+                              te                                         [array]
+  -s, --serve                 Serve the build folder over HTTP         [boolean]
+  -o, --outdir                Output directory                          [string]
+      --declaration, --de     Add TypeScript declarations              [boolean]
+  -w, --watch                 Watch for file changes                   [boolean]
   -c, --config                Build configuration file (js/ts)
                                           [string] [default: "xbuild.config.ts"]
-      --tsconfig, --tc        Set TypeScript configuration file to use
+      --tsconfig, --tsc       Set TypeScript configuration file to use
                                              [string] [default: "tsconfig.json"]
-  -m, --minify                Minify the code         [boolean] [default: false]
-  -b, --bundle                Bundle the code         [boolean] [default: false]
-      --noTypeChecker, --ntc  Skip TypeScript type checking
-                                                      [boolean] [default: false]
-      --buildOnError, --boe   Continue building even if there are TypeScript
-                              type errors             [boolean] [default: false]
+  -m, --minify                Minify the code                          [boolean]
+  -b, --bundle                Bundle the code                          [boolean]
+      --noTypeChecker, --ntc  Skip TypeScript type checking            [boolean]
+      --buildOnError, --boe   Continue building even if there are TypeScript typ
+                              e errors                                 [boolean]
+  -f, --format                Defines the format for the build output ('cjs' | '
+                              esm' | 'iif').                            [string]
   -v, --version               Show version number     [boolean] [default: false]
 
 ```

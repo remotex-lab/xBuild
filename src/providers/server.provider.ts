@@ -144,7 +144,7 @@ export class ServerProvider {
         });
 
         server.listen(this.config.port, this.config.host, () => {
-            console.log(`${ prefix() }HTTP server is running at http://${ this.config.host }:${ this.config.port }`);
+            console.log(`${ prefix() } HTTP/S server is running at http://${ this.config.host }:${ this.config.port }`);
         });
     }
 

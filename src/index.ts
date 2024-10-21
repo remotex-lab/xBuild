@@ -17,6 +17,7 @@ import type { ArgvInterface } from '@services/interfaces/cli.interface';
  * Imports
  */
 
+import '@errors/uncaught.error';
 import { BaseError } from '@errors/base.error';
 import { argvParser } from '@services/cli.service';
 import { BuildService } from '@services/build.service';

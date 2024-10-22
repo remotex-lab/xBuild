@@ -13,9 +13,9 @@ import type { BuildContext, BuildResult, Message, Metafile, PluginBuild, SameSha
 import { dirname, resolve } from 'path';
 import { build, context } from 'esbuild';
 import { spawn } from '@services/process.service';
-import { xBuildError } from '@errors/xbuild.error';
 import { esBuildError } from '@errors/esbuild.error';
 import { prefix } from '@components/banner.component';
+import { VMRuntimeError } from '@errors/vm-runtime.error';
 import { ServerProvider } from '@providers/server.provider';
 import { PluginsProvider } from '@providers/plugins.provider';
 import { parseIfDefConditionals } from '@plugins/ifdef.plugin';
@@ -332,25 +332,27 @@ export class BuildService {
      * process and log the errors.
      */
 
-    private handleErrors(esbuildError: unknown): void {
-        const errors = (<{ [keys: string]: Array<Message> }> esbuildError).errors;
-
+    private handleErrors(esbuildError: OnEndResult): void {
+        const errors = esbuildError.errors ?? [];
         for (const error of errors) {
             if (!error.detail) {
-                return console.log((new esBuildError(error)).toString());
+                console.error((new esBuildError(<Message> error)).stack);
+                continue;
             }
 
+            // ignore typescript eslint error
             if (error.detail.name === 'TypesError')
                 continue;
 
             if (error.detail.name) {
                 if (error.detail.name === 'VMRuntimeError') {
-                    return console.log(error.detail.toString());
-                } else if (error.detail.name === 'Error') {
-                    const xbuildError = new xBuildError(error.text);
-                    xbuildError.setStack(error.detail.stack);
+                    console.error(error.detail.stack);
+                    continue;
+                }
 
-                    return console.log(xbuildError.toString());
+                if (error.detail instanceof Error) {
+                    console.error(new VMRuntimeError(error.detail).originalErrorStack);
+                    continue;
                 }
             }
 

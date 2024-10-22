@@ -11,17 +11,18 @@ export type { BuildResult, OnLoadArgs, OnLoadResult, OnResolveArgs, OnResolveRes
  * Import will remove at compile time
  */
 
+import type { xBuildError } from '@errors/xbuild.error';
+import type { VMRuntimeError } from '@errors/vm-runtime.error';
 import type { ArgvInterface } from '@services/interfaces/cli.interface';
 
 /**
  * Imports
  */
 
+import '@errors/stack.error';
 import '@errors/uncaught.error';
-import { BaseError } from '@errors/base.error';
 import { argvParser } from '@services/cli.service';
 import { BuildService } from '@services/build.service';
-import { VMRuntimeError } from '@errors/vm-runtime.error';
 import { bannerComponent } from '@components/banner.component';
 import { configuration } from '@providers/configuration.provider';
 
@@ -67,9 +68,6 @@ async function run() {
  * Run entrypoint of xBuild
  */
 
-run().catch((error: Error | BaseError) => {
-    if (error instanceof BaseError)
-        return console.log(error.toString());
-
-    console.log((new VMRuntimeError(error)).toString());
+run().catch((error: VMRuntimeError & xBuildError) => {
+    console.error(error.stack);
 });

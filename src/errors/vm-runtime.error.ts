@@ -3,6 +3,7 @@
  */
 
 import type { SourceService } from '@remotex-labs/xmap';
+import type { ErrorType } from '@errors/interfaces/stack.interface';
 
 /**
  * Imports
@@ -39,6 +40,12 @@ export class VMRuntimeError extends BaseError {
     originalError: Error;
 
     /**
+     * Original error stack
+     */
+
+    originalErrorStack: string | undefined;
+
+    /**
      * Creates a new VMRuntimeError instance.
      *
      * This constructor initializes a new `VMRuntimeError` object, extending the native `Error` class with
@@ -60,7 +67,7 @@ export class VMRuntimeError extends BaseError {
      * ```
      */
 
-    constructor(originalError: Error, sourceMap?: SourceService) {
+    constructor(originalError: ErrorType, sourceMap?: SourceService) {
         // Pass the message to the base class Error
         super(originalError.message, sourceMap);
 
@@ -71,9 +78,10 @@ export class VMRuntimeError extends BaseError {
 
         // Store the original error
         this.originalError = originalError;
+        this.originalErrorStack = originalError.stack;
 
         // Assign the name of the error
         this.name = 'VMRuntimeError';
-        this.stack = this.reformatStack(originalError.stack);
+        this.stack = this.reformatStack(originalError);
     }
 }

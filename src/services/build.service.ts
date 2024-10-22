@@ -511,8 +511,7 @@ export class BuildService {
 
     private async end(result: BuildResult) {
         if (result.errors.length > 0) {
-            // todo Duplicate error in the watch process.
-            return;
+            return this.handleErrors(result);
         }
 
         console.log(
@@ -526,6 +525,7 @@ export class BuildService {
             );
         });
 
+        console.log('\n');
         if (this.config.dev) {
             this.spawnDev(<Metafile> result.metafile, <Array<string>> this.config.dev);
         }

@@ -98,6 +98,40 @@ export class BuildService {
     }
 
     /**
+     * Executes the build process.
+     * This method performs the build and handles any errors that occur. If watching or development mode is enabled,
+     * it starts watching for changes. It logs errors that are not related to TypeScript.
+     *
+     * @returns A promise that resolves when the build process is complete.
+     *
+     * @throws {Error} Throws an error if the build process encounters issues not related to TypeScript.
+     *
+     * @example
+     * ```typescript
+     * import { BuildService } from './build-service';
+     *
+     * const buildService = new BuildService(config);
+     * buildService.run().then(() => {
+     *     console.log('Build process completed successfully.');
+     * }).catch((error) => {
+     *     console.error('Build process failed:', error);
+     * });
+     * ```
+     *
+     * In this example, the `run` method is used to execute the build process. It handles both successful completion
+     * and errors.
+     */
+
+    async run(): Promise<void> {
+        return await this.execute(async () => {
+            const result = await this.build();
+            if (this.config.watch || this.config.dev) {
+                await (<BuildContext> result).watch();
+            }
+        });
+    }
+
+    /**
      * Runs the build process in debug mode for the specified entry points.
      * This method temporarily disables development and watch mode, initiates the build process, and spawns development processes
      * for the specified entry points. If any errors occur during the build, they are handled appropriately.
@@ -127,14 +161,12 @@ export class BuildService {
      */
 
     async runDebug(entryPoints: Array<string>): Promise<void> {
-        try {
+        return await this.execute(async () => {
             this.config.dev = false;
             this.config.watch = false;
             const result = <BuildResult> await this.build();
             this.spawnDev(<Metafile> result.metafile, entryPoints, true);
-        } catch (esbuildError: unknown) {
-            this.handleErrors(esbuildError);
-        }
+        });
     }
 
     /**
@@ -162,16 +194,14 @@ export class BuildService {
      * the build or server startup, it is handled and logged.
      */
 
-    async serve() {
+    async serve(): Promise<void> {
         const server = new ServerProvider(this.config.serve, this.config.esbuild.outdir ?? '');
 
-        try {
+        return await this.execute(async () => {
             server.start();
             const result = await this.build();
             await (<BuildContext> result).watch();
-        } catch (esbuildError: unknown) {
-            this.handleErrors(esbuildError);
-        }
+        });
     }
 
     /**

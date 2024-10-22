@@ -4,7 +4,7 @@
 
 import type { ChildProcessWithoutNullStreams } from 'child_process';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
-import type { BuildContext, BuildResult, Message, Metafile, PluginBuild, SameShape } from 'esbuild';
+import type { BuildContext, BuildResult, Message, Metafile, OnEndResult, PluginBuild, SameShape } from 'esbuild';
 
 /**
  * Imports
@@ -175,38 +175,37 @@ export class BuildService {
     }
 
     /**
-     * Executes the build process.
-     * This method performs the build and handles any errors that occur. If watching or development mode is enabled,
-     * it starts watching for changes. It logs errors that are not related to TypeScript.
+     * Executes a provided callback function within a try-catch block.
+     * This method ensures that any errors thrown during the execution of the callback
+     * are properly handled. If the error is related to esbuild's `OnEndResult` and contains
+     * an array of errors, it skips additional logging. Otherwise, it logs the error using
+     * a custom `VMRuntimeError`.
      *
-     * @returns A promise that resolves when the build process is complete.
+     * @param callback - A function that returns a `Promise<void>`, which is executed asynchronously.
+     *                   This callback is wrapped in error handling logic.
      *
-     * @throws {Error} Throws an error if the build process encounters issues not related to TypeScript.
+     * @returns A `Promise<void>` which resolves once the callback has been executed.
+     *          If an error is thrown, it is caught and handled.
+     *
+     * @throws In case of an error not related to esbuild, the method catches the error,
+     *         wraps it in a `VMRuntimeError`, and logs the error's stack trace to the console.
      *
      * @example
-     * ```typescript
-     * import { BuildService } from './build-service';
-     *
-     * const buildService = new BuildService(config);
-     * buildService.run().then(() => {
-     *     console.log('Build process completed successfully.');
-     * }).catch((error) => {
-     *     console.error('Build process failed:', error);
+     * ```ts
+     * await execute(async () => {
+     *   // Perform some asynchronous operation here
      * });
      * ```
-     *
-     * In this example, the `run` method is used to execute the build process. It handles both successful completion
-     * and errors.
      */
 
-    async run(): Promise<void> {
+    private async execute(callback: () => Promise<void>): Promise<void> {
         try {
-            const result = await this.build();
-            if (this.config.watch || this.config.dev) {
-                await (<BuildContext> result).watch();
+            await callback();
+        } catch (error: unknown) {
+            const esbuildError = <OnEndResult> error;
+            if (!Array.isArray(esbuildError.errors)) {
+                console.error(new VMRuntimeError(<Error> error).stack);
             }
-        } catch (esbuildError: unknown) {
-            this.handleErrors(esbuildError);
         }
     }
 

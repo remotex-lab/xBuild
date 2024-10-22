@@ -12,6 +12,7 @@ import type { ConfigurationInterface } from '@configuration/interfaces/configura
 
 import ts from 'typescript';
 import { existsSync, readFileSync } from 'fs';
+import { xBuildLazy } from '@errors/stack.error';
 import { parseConfigurationFile } from '@configuration/parse.configuration';
 import { configuration, tsConfiguration } from '@providers/configuration.provider';
 
@@ -82,6 +83,12 @@ const defaultConfig: ConfigurationInterface = <any> {
         active: false
     }
 };
+
+beforeEach(() => {
+    jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
+        file: 'x'
+    });
+});
 
 /**
  * Tests for the `tsConfiguration` function.
@@ -325,6 +332,10 @@ describe('configuration', () => {
      */
 
     test('should throw an error if entryPoints is undefined', async () => {
+        jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
+            file: 'x'
+        });
+
         (existsSync as jest.Mock).mockReturnValueOnce(true);
         (parseConfigurationFile as jest.Mock).mockReturnValueOnce({ esbuild: {} });
 

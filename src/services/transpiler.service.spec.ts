@@ -10,29 +10,17 @@ import type { BuildOptions } from 'esbuild';
 
 import { cwd } from 'process';
 import { build } from 'esbuild';
+import { xBuildLazy } from '@errors/stack.error';
 import {
-    analyzeDependencies,
-    defaultBuildOptions,
+    transpileFile,
     extractSourceMap,
-    transpileFile
+    analyzeDependencies,
+    defaultBuildOptions
 } from '@services/transpiler.service';
 
 /**
  * Mocks
  */
-
-jest.mock('fs', () => ({
-    ...jest.requireActual('fs'),
-    existsSync: jest.fn(),
-    readFileSync: jest.fn().mockReturnValue(JSON.stringify({
-        version: 3,
-        file: 'index.js',
-        sources: [ 'source.js' ],
-        names: [],
-        mappings: 'AAAA',
-        sourcesContent: [ 'asd' ]
-    }))
-}));
 
 jest.mock('esbuild', () => ({
     build: jest.fn()
@@ -49,12 +37,12 @@ const mockedBuild = build as jest.MockedFunction<typeof build>;
 
 
 describe('RemoteX Transpiler', () => {
-
     /**
      * Restore all mocks after the test suite is complete.
      */
 
     afterAll(() => {
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
@@ -108,6 +96,9 @@ describe('RemoteX Transpiler', () => {
 
         test('should throw an error if the source map URL is not found', () => {
             const dataString = 'console.log("hello world");';
+            const spy = jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
+                file: 'x'
+            });
 
             expect(() => extractSourceMap(dataString)).toThrow('Source map URL not found in the output.');
         });
@@ -348,6 +339,6 @@ describe('analyzeDependencies', () => {
     test('should throw an error if the build process fails', async () => {
         mockedBuild.mockRejectedValue(new Error('Build failed'));
 
-        await expect(analyzeDependencies([ './src/index.js'], 'browser')).rejects.toThrow('Build failed');
+        await expect(analyzeDependencies([ './src/index.js' ], 'browser')).rejects.toThrow('Build failed');
     });
 });

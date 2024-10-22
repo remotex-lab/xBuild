@@ -2,7 +2,15 @@
  * Import will remove at compile time
  */
 
-import type { BuildResult, OnLoadArgs, OnLoadResult, OnResolveArgs, OnResolveResult, PluginBuild } from 'esbuild';
+import type {
+    BuildResult,
+    OnLoadArgs,
+    PluginBuild,
+    OnEndResult,
+    OnLoadResult,
+    OnResolveArgs,
+    OnResolveResult
+} from 'esbuild';
 
 /**
  * A type that defines the possible return values of a plugin function.
@@ -18,7 +26,7 @@ export type pluginResultType = Promise<null | void> | null | void;
  * @returns A `pluginResultType`, which may include asynchronous operations.
  */
 
-export type OnEndType = (result: BuildResult) => pluginResultType;
+export type OnEndType = (result: BuildResult) => pluginResultType | OnEndResult | Promise<OnEndResult>;
 
 /**
  * Defines the signature of a function that is called at the start of the build process.
@@ -27,7 +35,7 @@ export type OnEndType = (result: BuildResult) => pluginResultType;
  * @returns A `pluginResultType`, which may include asynchronous operations.
  */
 
-export type OnStartType = (build: PluginBuild) => pluginResultType;
+export type OnStartType = (build: PluginBuild) => pluginResultType | OnEndResult | Promise<OnEndResult>;
 
 /**
  * Defines the signature of a function that is called during the resolution of an import path.

@@ -2,8 +2,16 @@
  * Import will remove at compile time
  */
 
-import type { BuildResult, OnLoadArgs, OnLoadResult, OnResolveArgs, OnResolveResult, PluginBuild } from 'esbuild';
 import type { OnEndType, OnLoadType, OnResolveType, OnStartType } from '@providers/interfaces/plugins.interfaces';
+import type {
+    OnLoadArgs,
+    BuildResult,
+    OnEndResult,
+    PluginBuild,
+    OnLoadResult,
+    OnResolveArgs,
+    OnResolveResult, Message
+} from 'esbuild';
 
 /**
  * Imports
@@ -185,10 +193,24 @@ export class PluginsProvider {
      * ```
      */
 
-    private async handleOnStart(build: PluginBuild): Promise<void> {
+    private async handleOnStart(build: PluginBuild): Promise<OnEndResult> {
+        const result: Required<OnEndResult> = {
+            errors: [],
+            warnings: []
+        };
+
         for (const hook of this.onStartHooks) {
-            await hook(build);
+            const status = await hook(build);
+            if (status) {
+                if (status.errors?.length)
+                    result.errors.push(...status.errors);
+
+                if (status.warnings?.length)
+                    result.warnings.push(...status.warnings);
+            }
         }
+
+        return result;
     }
 
     /**
@@ -197,23 +219,43 @@ export class PluginsProvider {
      * This function is called after the build process completes and invokes each hook registered via
      * `registerOnEnd`. Hooks can be used to process the build results, such as performing analysis or cleanup.
      *
-     * @param result - The build result object provided by esbuild, containing details about the build process.
+     * @param buildResult - The build buildResult object provided by esbuild, containing details about the build process.
      *
      * @returns A promise that resolves when all hooks have been executed.
      *
      * @example
      * ```typescript
      * // Registering an onEnd hook
-     * pluginProvider.registerOnEnd(async (result) => {
-     *   console.log('Build completed:', result);
+     * pluginProvider.registerOnEnd(async (buildResult) => {
+     *   console.log('Build completed:', buildResult);
      * });
      * ```
      */
 
-    private async handleOnEnd(result: BuildResult): Promise<void> {
+    private async handleOnEnd(buildResult: BuildResult): Promise<OnEndResult> {
+        const result: Required<OnEndResult> = {
+            errors: buildResult.errors ?? [],
+            warnings: buildResult.warnings ?? []
+        };
+
         for (const hook of this.onEndHooks) {
-            await hook(result);
+            // Update buildResult with the current errors and warnings from result
+            buildResult.errors = <Message[]> result.errors;
+            buildResult.warnings = <Message[]> result.warnings;
+
+            const status = await hook(buildResult);
+
+            // Merge errors and warnings from the hook status
+            if (status) {
+                if (status.errors?.length)
+                    result.errors.push(...status.errors);
+
+                if (status.warnings?.length)
+                    result.warnings.push(...status.warnings);
+            }
         }
+
+        return result;
     }
 
     /**

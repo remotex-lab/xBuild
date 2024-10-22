@@ -5,6 +5,12 @@
 import type { EntryPoints } from '@configuration/interfaces/configuration.interface';
 
 /**
+ * Imports
+ */
+
+import { xBuildError } from '@errors/xbuild.error';
+
+/**
  * Maps an array of file paths to an object where the keys are filenames (without extensions)
  * and the values are the corresponding file paths.
  *
@@ -95,5 +101,5 @@ export function extractEntryPoints(entryPoints: EntryPoints): Record<string, str
         return entryPoints;
     }
 
-    throw new Error('Unsupported entry points format');
+    throw new xBuildError('Unsupported entry points format');
 }

@@ -4,7 +4,7 @@
 
 import type { ChildProcessWithoutNullStreams } from 'child_process';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
-import type { BuildContext, BuildResult, Message, Metafile, PluginBuild, SameShape } from 'esbuild';
+import type { BuildContext, BuildResult, Message, Metafile, OnEndResult, PluginBuild, SameShape } from 'esbuild';
 
 /**
  * Imports
@@ -13,9 +13,9 @@ import type { BuildContext, BuildResult, Message, Metafile, PluginBuild, SameSha
 import { dirname, resolve } from 'path';
 import { build, context } from 'esbuild';
 import { spawn } from '@services/process.service';
-import { xBuildError } from '@errors/xbuild.error';
 import { esBuildError } from '@errors/esbuild.error';
 import { prefix } from '@components/banner.component';
+import { VMRuntimeError } from '@errors/vm-runtime.error';
 import { ServerProvider } from '@providers/server.provider';
 import { PluginsProvider } from '@providers/plugins.provider';
 import { parseIfDefConditionals } from '@plugins/ifdef.plugin';
@@ -25,7 +25,7 @@ import { analyzeDependencies } from '@services/transpiler.service';
 import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
-import { packageTypeComponents } from '@components/package-type.components';
+import { packageTypeComponent } from '@components/package-type.component';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -98,6 +98,40 @@ export class BuildService {
     }
 
     /**
+     * Executes the build process.
+     * This method performs the build and handles any errors that occur. If watching or development mode is enabled,
+     * it starts watching for changes. It logs errors that are not related to TypeScript.
+     *
+     * @returns A promise that resolves when the build process is complete.
+     *
+     * @throws {Error} Throws an error if the build process encounters issues not related to TypeScript.
+     *
+     * @example
+     * ```typescript
+     * import { BuildService } from './build-service';
+     *
+     * const buildService = new BuildService(config);
+     * buildService.run().then(() => {
+     *     console.log('Build process completed successfully.');
+     * }).catch((error) => {
+     *     console.error('Build process failed:', error);
+     * });
+     * ```
+     *
+     * In this example, the `run` method is used to execute the build process. It handles both successful completion
+     * and errors.
+     */
+
+    async run(): Promise<void> {
+        return await this.execute(async () => {
+            const result = await this.build();
+            if (this.config.watch || this.config.dev) {
+                await (<BuildContext> result).watch();
+            }
+        });
+    }
+
+    /**
      * Runs the build process in debug mode for the specified entry points.
      * This method temporarily disables development and watch mode, initiates the build process, and spawns development processes
      * for the specified entry points. If any errors occur during the build, they are handled appropriately.
@@ -127,14 +161,12 @@ export class BuildService {
      */
 
     async runDebug(entryPoints: Array<string>): Promise<void> {
-        try {
+        return await this.execute(async () => {
             this.config.dev = false;
             this.config.watch = false;
             const result = <BuildResult> await this.build();
             this.spawnDev(<Metafile> result.metafile, entryPoints, true);
-        } catch (esbuildError: unknown) {
-            this.handleErrors(esbuildError);
-        }
+        });
     }
 
     /**
@@ -162,51 +194,48 @@ export class BuildService {
      * the build or server startup, it is handled and logged.
      */
 
-    async serve() {
+    async serve(): Promise<void> {
         const server = new ServerProvider(this.config.serve, this.config.esbuild.outdir ?? '');
 
-        try {
+        return await this.execute(async () => {
             server.start();
             const result = await this.build();
             await (<BuildContext> result).watch();
-        } catch (esbuildError: unknown) {
-            this.handleErrors(esbuildError);
-        }
+        });
     }
 
     /**
-     * Executes the build process.
-     * This method performs the build and handles any errors that occur. If watching or development mode is enabled,
-     * it starts watching for changes. It logs errors that are not related to TypeScript.
+     * Executes a provided callback function within a try-catch block.
+     * This method ensures that any errors thrown during the execution of the callback
+     * are properly handled. If the error is related to esbuild's `OnEndResult` and contains
+     * an array of errors, it skips additional logging. Otherwise, it logs the error using
+     * a custom `VMRuntimeError`.
      *
-     * @returns A promise that resolves when the build process is complete.
+     * @param callback - A function that returns a `Promise<void>`, which is executed asynchronously.
+     *                   This callback is wrapped in error handling logic.
      *
-     * @throws {Error} Throws an error if the build process encounters issues not related to TypeScript.
+     * @returns A `Promise<void>` which resolves once the callback has been executed.
+     *          If an error is thrown, it is caught and handled.
+     *
+     * @throws In case of an error not related to esbuild, the method catches the error,
+     *         wraps it in a `VMRuntimeError`, and logs the error's stack trace to the console.
      *
      * @example
-     * ```typescript
-     * import { BuildService } from './build-service';
-     *
-     * const buildService = new BuildService(config);
-     * buildService.run().then(() => {
-     *     console.log('Build process completed successfully.');
-     * }).catch((error) => {
-     *     console.error('Build process failed:', error);
+     * ```ts
+     * await execute(async () => {
+     *   // Perform some asynchronous operation here
      * });
      * ```
-     *
-     * In this example, the `run` method is used to execute the build process. It handles both successful completion
-     * and errors.
      */
 
-    async run(): Promise<void> {
+    private async execute(callback: () => Promise<void>): Promise<void> {
         try {
-            const result = await this.build();
-            if (this.config.watch || this.config.dev) {
-                await (<BuildContext> result).watch();
+            await callback();
+        } catch (error: unknown) {
+            const esbuildError = <OnEndResult> error;
+            if (!Array.isArray(esbuildError.errors)) {
+                console.error(new VMRuntimeError(<Error> error).stack);
             }
-        } catch (esbuildError: unknown) {
-            this.handleErrors(esbuildError);
         }
     }
 
@@ -332,25 +361,27 @@ export class BuildService {
      * process and log the errors.
      */
 
-    private handleErrors(esbuildError: unknown): void {
-        const errors = (<{ [keys: string]: Array<Message> }> esbuildError).errors;
-
+    private handleErrors(esbuildError: OnEndResult): void {
+        const errors = esbuildError.errors ?? [];
         for (const error of errors) {
             if (!error.detail) {
-                return console.log((new esBuildError(error)).toString());
+                console.error((new esBuildError(<Message> error)).stack);
+                continue;
             }
 
+            // ignore typescript eslint error
             if (error.detail.name === 'TypesError')
                 continue;
 
             if (error.detail.name) {
                 if (error.detail.name === 'VMRuntimeError') {
-                    return console.log(error.detail.toString());
-                } else if (error.detail.name === 'Error') {
-                    const xbuildError = new xBuildError(error.text);
-                    xbuildError.setStack(error.detail.stack);
+                    console.error(error.detail.stack);
+                    continue;
+                }
 
-                    return console.log(xbuildError.toString());
+                if (error.detail instanceof Error) {
+                    console.error(new VMRuntimeError(error.detail).originalErrorStack);
+                    continue;
                 }
             }
 
@@ -368,7 +399,7 @@ export class BuildService {
      */
 
     private async build(): Promise<BuildContext | SameShape<unknown, unknown> | BuildResult> {
-        packageTypeComponents(this.config);
+        packageTypeComponent(this.config);
         const esbuild = this.config.esbuild;
 
         if (this.config.hooks) {
@@ -405,7 +436,7 @@ export class BuildService {
      *
      * @param meta - The metafile containing information about build outputs.
      * This typically includes a mapping of output files and their dependencies.
-     * @param enetryPoint - An array of entry point file names to match against the metafile outputs.
+     * @param entryPoint - An array of entry point file names to match against the metafile outputs.
      * Only files that match these entry points will have development processes spawned.
      * @param debug - A boolean flag to enable debugging mode for spawned processes.
      * If `true`, the processes will start in debug mode with the `--inspect-brk` option. Defaults to `false`.
@@ -433,12 +464,12 @@ export class BuildService {
      * @private
      */
 
-    private spawnDev(meta: Metafile, enetryPoint: Array<string>, debug: boolean = false) {
-        if (!Array.isArray(enetryPoint))
+    private spawnDev(meta: Metafile, entryPoint: Array<string>, debug: boolean = false) {
+        if (!Array.isArray(entryPoint))
             return;
 
         for (const file in meta.outputs) {
-            if (file.includes('map') || !enetryPoint.some(key => file.includes(`/${ key }.`)))
+            if (file.includes('map') || !entryPoint.some(key => file.includes(`/${ key }.`)))
                 continue;
 
             this.activePossess.push(spawn(file, debug));
@@ -480,8 +511,7 @@ export class BuildService {
 
     private async end(result: BuildResult) {
         if (result.errors.length > 0) {
-            // todo Duplicate error in the watch process.
-            return;
+            return this.handleErrors(result);
         }
 
         console.log(
@@ -495,6 +525,7 @@ export class BuildService {
             );
         });
 
+        console.log('\n');
         if (this.config.dev) {
             this.spawnDev(<Metafile> result.metafile, <Array<string>> this.config.dev);
         }

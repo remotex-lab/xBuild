@@ -2,17 +2,18 @@
  * Imports
  */
 
+import { xBuildLazy } from '@errors/stack.error';
 import { SourceService } from '@remotex-labs/xmap';
 import { VMRuntimeError } from '@errors/vm-runtime.error';
 
-/**
- * Mocks
- */
+describe('VMRuntimeError', () => {
+    let originalError: Error;
+    let mockSourceService: SourceService;
 
-jest.mock('fs', () => ({
-    ...jest.requireActual('fs'),
-    readFileSync: jest.fn().mockImplementation((path: string) => {
-        return JSON.stringify({
+    beforeEach(() => {
+        jest.clearAllMocks();
+        originalError = new Error('Original VM error');
+        mockSourceService = new SourceService({
             version: 3,
             file: 'index.js',
             sources: [ 'source.js' ],
@@ -20,29 +21,15 @@ jest.mock('fs', () => ({
             mappings: 'AAAA',
             sourcesContent: [ 'asd' ]
         });
-    })
-}));
 
-jest.mock('@remotex-labs/xmap', () => ({
-    ...jest.requireActual('@remotex-labs/xmap'),
-    SourceService: jest.fn().mockImplementation(() => ({
-        getSourcePosition: jest.fn().mockReturnValue({
+        jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(mockSourceService);
+        jest.spyOn(mockSourceService, 'getPositionWithCode').mockReturnValue(<any> {
             source: 'src/file.ts',
             sourceRoot: 'src/',
             line: 10,
             column: 5,
-            code: 'const a = 1;'
-        })
-    }))
-}));
-
-describe('VMRuntimeError', () => {
-    let originalError: Error;
-    let mockSourceService: SourceService;
-
-    beforeEach(() => {
-        originalError = new Error('Original VM error');
-        mockSourceService = new SourceService(<any> 'x');
+            code: 'const a = 1;',
+        });
     });
 
     /**

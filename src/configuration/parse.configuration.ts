@@ -2,6 +2,7 @@
  * Import will remove at compile time
  */
 
+import type { ErrorType } from '@errors/interfaces/stack.interface';
 import type { ConfigurationInterface, ModuleInterface } from '@configuration/interfaces/configuration.interface';
 
 /**
@@ -108,12 +109,6 @@ export async function parseConfigurationFile(file: string): Promise<Configuratio
         footer: { js: '})(module, module.exports);' }
     });
 
-    /**
-     * Todo ESM package ?
-     * const cjsModule = <typeof Module> <unknown> await import('module');
-     * const require = cjsModule.createRequire(import.meta.url);
-     */
-
     const module: ModuleInterface = { exports: {} };
     const require = createRequire(import.meta.url);
     const source = new SourceService(JSON.parse(atob(sourceMap)));
@@ -123,8 +118,8 @@ export async function parseConfigurationFile(file: string): Promise<Configuratio
             require,
             module
         });
-    } catch (error) {
-        throw new VMRuntimeError(<any> error, source);
+    } catch (error: unknown) {
+        throw new VMRuntimeError(<ErrorType> error, source);
     }
 
     return wrapConfigFunctionsWithSourcemap(<ConfigurationInterface> module.exports.default, source);

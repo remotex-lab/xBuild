@@ -38,12 +38,12 @@ import { mkdirSync, writeFileSync } from 'fs';
  *     format: 'esm'
  *   }
  * };
- * packageTypeComponents(config);
+ * packageTypeComponent(config);
  * // This will create 'dist/package.json' with the content: {"type": "module"}
  * ```
  */
 
-export function packageTypeComponents(config: ConfigurationInterface): void {
+export function packageTypeComponent(config: ConfigurationInterface): void {
     const outDir = config.esbuild.outdir ?? '';
     const type = config.esbuild.format === 'esm' ? 'module' : 'commonjs';
 

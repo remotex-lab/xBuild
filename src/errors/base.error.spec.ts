@@ -1,10 +1,4 @@
 /**
- * Import will remove at compile time
- */
-
-import type { PositionSourceInterface } from '@remotex-labs/xmap';
-
-/**
  * Imports
  */
 
@@ -38,7 +32,7 @@ jest.mock('@remotex-labs/xmap', () => ({
             line: 10,
             column: 5,
             code: 'const a = 1;'
-        } as PositionSourceInterface)
+        })
     })),
     formatErrorCode: (position: any, options: any) => `formatted ${position.code}`,
     highlightCode: (code: any) => `highlighted ${code}`,
@@ -54,18 +48,6 @@ jest.mock('@remotex-labs/xmap', () => ({
 class TestError extends BaseError {
     constructor(message: string, sourceMap?: SourceService) {
         super(message, sourceMap);
-    }
-
-    public getStackArray(): string[] {
-        return this.stackArray;
-    }
-
-    public setStack(stack: string | undefined): void {
-        this.reformatStack(stack);
-    }
-
-    public getBlockCode(): string | null {
-        return this.blockCode;
     }
 }
 
@@ -105,61 +87,6 @@ describe('BaseError', () => {
         expect(testError).toBeInstanceOf(TestError);
         expect(testError.message).toBe('Test error message');
         expect(testError.stack).toBeDefined();
-    });
-
-    /**
-     * Test case to verify that the stack trace is formatted correctly.
-     *
-     * This test checks that the stack trace is reformatted and returned as an array.
-     *
-     * Code:
-     * ```typescript
-     * testError.setStack('Error stack');
-     * expect(testError.getStackArray()).toEqual(['at name file.js [10:5]']);
-     * ```
-     * Expected result: The stack trace is correctly formatted and returned as an array.
-     */
-
-    test('should format the stack trace correctly', () => {
-        testError.setStack('Error stack');
-        expect(testError.getStackArray()).toEqual([
-            'at name  \u001b[38;5;238mfile.js\u001b[0m \u001b[38;5;243m[10:5]\u001b[0m'
-        ]);
-    });
-
-
-    /**
-     * Test case to verify that the block code is formatted correctly.
-     *
-     * This test checks that the block code is updated and formatted using the provided source position.
-     *
-     * Code:
-     * ```typescript
-     * const mockPosition: PositionSourceInterface = <any> {
-     *     source: 'src/file.ts',
-     *     sourceRoot: 'src/',
-     *     line: 10,
-     *     column: 5,
-     *     code: 'const a = 1;'
-     * };
-     * (<any> testError).updateBlockCodeIfNecessary(mockPosition);
-     * expect(testError.getBlockCode()).toBe('formatted highlighted const a = 1;');
-     * ```
-     * Expected result: The block code is correctly formatted based on the source position.
-     */
-
-    test('should format the block code correctly', () => {
-        const mockPosition: PositionSourceInterface = <any> {
-            source: 'src/file.ts',
-            sourceRoot: 'src/',
-            line: 10,
-            column: 5,
-            code: 'const a = 1;'
-        };
-
-        (<any> testError).updateBlockCodeIfNecessary(mockPosition);
-
-        expect(testError.getBlockCode()).toBe('formatted highlighted const a = 1;');
     });
 
     /**

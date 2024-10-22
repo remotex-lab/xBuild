@@ -15,6 +15,11 @@ import { BaseError } from '@errors/base.error';
  */
 
 export class xBuildError extends BaseError {
+    /**
+     * Original error stack
+     */
+
+    originalErrorStack: string | undefined;
 
     /**
      * Creates an instance of `xBuildError`.
@@ -41,15 +46,7 @@ export class xBuildError extends BaseError {
 
         // Assign the name of the error
         this.name = 'xBuildError';
-        this.stack = this.reformatStack(this.stack);
-    }
-
-    /**
-     * Set external stack
-     */
-
-    setStack(stack: string): void {
-        this.blockCode = null;
-        this.stack = this.reformatStack(stack);
+        this.originalErrorStack = this.stack;
+        this.stack = this.reformatStack(this);
     }
 }

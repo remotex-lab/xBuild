@@ -2,6 +2,7 @@
  * Imports
  */
 
+import { xBuildLazy } from '@errors/stack.error';
 import { extractEntryPoints } from '@components/entry-points.component';
 
 /**
@@ -13,7 +14,6 @@ import { extractEntryPoints } from '@components/entry-points.component';
  */
 
 describe('ExtractEntryPoints', () => {
-
     /**
      * Test case to verify that the `extractEntryPoints` function correctly handles an array of objects
      * with `in` and `out` properties. This format should extract the `in` property from each object
@@ -117,6 +117,10 @@ describe('ExtractEntryPoints', () => {
      */
 
     test('should throw error for unsupported format', () => {
+        const spy = jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
+            file: 'x',
+        });
+
         expect(() => extractEntryPoints(123 as any)).toThrow('Unsupported entry points format');
         expect(() => extractEntryPoints('{}' as any)).toThrow('Unsupported entry points format');
         expect(() => extractEntryPoints(null as any)).toThrow('Unsupported entry points format');

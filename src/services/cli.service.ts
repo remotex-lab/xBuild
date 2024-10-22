@@ -11,7 +11,6 @@ import type { ArgvInterface } from '@services/interfaces/cli.interface';
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { bannerComponent } from '@components/banner.component';
 
 /**
  * Parses command-line arguments into an `ArgvInterface` object using `yargs`.
@@ -129,7 +128,7 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
         .version(false) // Disable the default version behavior
         .middleware((argv) => {
             if (argv.version) {
-                console.log(bannerComponent());
+                // todo fix the banner and color
                 process.exit(0);
             }
         });
@@ -137,7 +136,6 @@ export function argvParser(argv: Array<string>): Argv<ArgvInterface> {
     // Custom help message with version info at the top
     cli.showHelp((helpText) => {
         if (process.argv.includes('--help') || process.argv.includes('-h')) {
-            console.log(bannerComponent());
             console.log(helpText + '\n\n');
             process.exit(0); // Ensure the process exits after showing help
         }

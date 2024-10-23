@@ -257,7 +257,7 @@ export class BuildService {
     }
 
     /**
-     * Sets up the plugins provider and registers the plugin hooks.
+     * Sets up the plugin's provider and registers the plugin hooks.
      */
 
     private setupPlugins(): void {

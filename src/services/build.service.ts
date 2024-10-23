@@ -83,14 +83,21 @@ export class BuildService {
      * The constructor configures the TypeScript provider, suppresses esbuild logging,
      * sets up development modes, and registers the necessary plugins.
      *
+     * Declaration files will be output based on the following order of precedence:
+     * 1. If `declarationOutDir` is set in the configuration, it will be used.
+     * 2. If `declarationOutDir` is not provided, it will use the `outDir` value from the tsconfig.
+     * 3. If neither of the above is available, it falls back to using the `outdir` specified in the esbuild configuration.
+     *
      * @param config - The configuration object for the build process, including esbuild and TypeScript settings.
      */
 
     constructor(private config: ConfigurationInterface) {
+        const tsConfig = tsConfiguration(this.config.esbuild);
+
         this.config.esbuild.logLevel = 'silent';
         this.pluginsProvider = new PluginsProvider();
         this.typeScriptProvider = new TypeScriptProvider(
-            tsConfiguration(this.config.esbuild), this.config.esbuild.outdir ?? 'dist'
+            tsConfig, this.config.declarationOutDir ?? tsConfig.options.outDir ?? this.config.esbuild.outdir!
         );
 
         this.configureDevelopmentMode();

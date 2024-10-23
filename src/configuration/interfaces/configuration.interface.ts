@@ -256,6 +256,20 @@ export interface ConfigurationInterface {
     declaration: boolean;
 
     /**
+     * Overrides the output directory for TypeScript declaration files (.d.ts).
+     *
+     * If this option is not set, the output directory specified in the `outDir`
+     * field of your `tsconfig.json` will be used.
+     * This allows for custom control
+     * over where the declaration files are emitted, separate from the main
+     * output directory for compiled JavaScript files.
+     *
+     * @default The `outDir` from `tsconfig.json` will be used if this is not provided.
+     */
+
+    declarationOutDir?: string;
+
+    /**
      * Continues building even if TypeScript type errors are present.
      */
 

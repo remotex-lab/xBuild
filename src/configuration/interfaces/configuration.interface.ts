@@ -250,6 +250,41 @@ export interface ConfigurationInterface {
     watch: boolean;
 
     /**
+     * The directory where the generated `package.json` file will be saved,
+     * indicating the module type (`"commonjs"` or `"module"`).
+     *
+     * - If the format is `esm`, the `package.json` file will contain `"type": "module"`.
+     * - If the format is `cjs`, the `package.json` file will contain `"type": "commonjs"`.
+     *
+     * If this field is not set (`undefined`), the `package.json` file will be saved in the
+     * `outdir` specified in the esbuild configuration.
+     *
+     * Example:
+     *
+     * ```ts
+     * {
+     *   esbuild: {
+     *     outdir: 'dist',
+     *     format: 'esm'
+     *   },
+     *   moduleTypeOutDir: 'custom/dist'
+     * }
+     * // This will create 'custom/dist/package.json' with the content: {"type": "module"}
+     *
+     * // If moduleTypeOutDir is not provided:
+     * {
+     *   esbuild: {
+     *     outdir: 'dist',
+     *     format: 'cjs'
+     *   }
+     * }
+     * // This will create 'dist/package.json' with the content: {"type": "commonjs"}
+     * ```
+     */
+
+    moduleTypeOutDir?: string;
+
+    /**
      * Generates TypeScript declaration files.
      */
 

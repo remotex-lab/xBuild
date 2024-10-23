@@ -18,13 +18,12 @@ import { mkdirSync, writeFileSync } from 'fs';
  * - If the format is `esm`, the `type` will be set to `"module"`.
  * - If the format is `cjs`, the `type` will be set to `"commonjs"`.
  *
- * The function will ensure that the output directory exists, and if it doesn't,
+ * The function will ensure that the specified output directory exists, and if it doesn't,
  * it will create the necessary directories before writing the `package.json` file.
  *
- * @param {ConfigurationInterface} config - The build configuration object containing
- * esbuild-related settings, such as the output directory (`outdir`) and format (`format`).
+ * @param config - The build configuration object containing
+ * esbuild-related settings, such as the format (`format`).
  *
- * - `config.esbuild.outdir`: The output directory where the `package.json` will be created.
  * - `config.esbuild.format`: The module format, either `'esm'` or `'cjs'`, that determines the `type` field.
  *
  * @throws Will throw an error if there is a problem creating the directory or writing the file.
@@ -34,7 +33,6 @@ import { mkdirSync, writeFileSync } from 'fs';
  * ```ts
  * const config = {
  *   esbuild: {
- *     outdir: 'dist',
  *     format: 'esm'
  *   }
  * };
@@ -44,9 +42,9 @@ import { mkdirSync, writeFileSync } from 'fs';
  */
 
 export function packageTypeComponent(config: ConfigurationInterface): void {
-    const outDir = config.esbuild.outdir ?? '';
+    const outDir = config.moduleTypeOutDir ?? config.esbuild.outdir ?? 'dist';
     const type = config.esbuild.format === 'esm' ? 'module' : 'commonjs';
 
     mkdirSync(outDir, { recursive: true });
-    writeFileSync(join(outDir, 'package.json'), `{"type": "${type}"}`);
+    writeFileSync(join(outDir, 'package.json'), `{"type": "${ type }"}`);
 }

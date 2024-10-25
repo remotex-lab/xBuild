@@ -34,6 +34,7 @@ import {
     visitEachChild,
     isStringLiteral,
     resolveModuleName,
+    DiagnosticCategory,
     isImportDeclaration,
     isExportDeclaration,
     getPreEmitDiagnostics,
@@ -143,6 +144,11 @@ export class TypeScriptProvider {
      *   - An array of objects with `in` and `out` properties (`{ in: string, out: string }[]`).
      *   - A record object with file paths as values (`Record<string, string>`).
      *
+     * @param noTypeChecker - Skips TypeScript type checking.
+     * @param allowError - A boolean flag indicating whether to throw an error if diagnostics are present. If set to
+     * `true`, errors are logged but not thrown, allowing the process to continue. Defaults to `false`, which throws
+     * an error if diagnostics are encountered.
+     *
      * @returns void
      *
      * @example
@@ -152,7 +158,7 @@ export class TypeScriptProvider {
      * ```
      */
 
-    generateDeclarations(entryPoints: EntryPoints): void {
+    generateDeclarations(entryPoints: EntryPoints, noTypeChecker = false, allowError: boolean = false): void {
         const files = Object.values(extractEntryPoints(entryPoints));
         const program = createProgram(files, {
             ...this.options,
@@ -162,6 +168,13 @@ export class TypeScriptProvider {
             emitDeclarationOnly: true
         });
 
+        // Collect diagnostics and check for errors
+        const diagnostics = getPreEmitDiagnostics(program);
+        if (!noTypeChecker && diagnostics.some(diagnostic => diagnostic.category === DiagnosticCategory.Error)) {
+            return this.handleDiagnostics(diagnostics, allowError);
+        }
+
+        // Emit declarations if no type errors were found
         program.emit(undefined, undefined, undefined, true, {
             afterDeclarations: [ this.createTransformerFactory() ]
         });

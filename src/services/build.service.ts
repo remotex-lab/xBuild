@@ -493,11 +493,11 @@ export class BuildService {
     private async start(build: PluginBuild) {
         try {
             console.log(`${ prefix() } StartBuild ${ build.initialOptions.outdir }`);
-            if (!this.config.noTypeChecker)
-                this.typeScriptProvider.typeCheck(this.config.buildOnError);
 
             if (this.config.declaration)
-                this.typeScriptProvider.generateDeclarations(this.config.esbuild.entryPoints);
+                this.typeScriptProvider.generateDeclarations(this.config.esbuild.entryPoints, this.config.noTypeChecker, this.config.buildOnError);
+            else if (!this.config.noTypeChecker)
+                this.typeScriptProvider.typeCheck(this.config.buildOnError);
         } finally {
             while (this.activePossess.length > 0) {
                 const element = this.activePossess.pop();

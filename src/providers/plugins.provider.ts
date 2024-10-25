@@ -2,15 +2,22 @@
  * Import will remove at compile time
  */
 
-import type { OnEndType, OnLoadType, OnResolveType, OnStartType } from '@providers/interfaces/plugins.interfaces';
 import type {
+    OnEndType,
+    OnLoadType,
+    BuildState,
+    OnStartType,
+    OnResolveType
+} from '@providers/interfaces/plugins.interfaces';
+import type {
+    Message,
     OnLoadArgs,
     BuildResult,
     OnEndResult,
     PluginBuild,
     OnLoadResult,
     OnResolveArgs,
-    OnResolveResult, Message
+    OnResolveResult
 } from 'esbuild';
 
 /**
@@ -26,6 +33,12 @@ import { resolve } from 'path';
  */
 
 export class PluginsProvider {
+    /**
+     * Holds the build state that hooks can modify.
+     */
+
+    private buildState: BuildState = {};
+
     /**
      * Holds the registered hooks for the `onEnd` lifecycle event.
      * This array contains functions that are called after the build process completes.
@@ -194,13 +207,14 @@ export class PluginsProvider {
      */
 
     private async handleOnStart(build: PluginBuild): Promise<OnEndResult> {
+        this.buildState = {};
         const result: Required<OnEndResult> = {
             errors: [],
             warnings: []
         };
 
         for (const hook of this.onStartHooks) {
-            const status = await hook(build);
+            const status = await hook(build, this.buildState);
             if (status) {
                 if (status.errors?.length)
                     result.errors.push(...status.errors);
@@ -243,7 +257,7 @@ export class PluginsProvider {
             buildResult.errors = <Message[]> result.errors;
             buildResult.warnings = <Message[]> result.warnings;
 
-            const status = await hook(buildResult);
+            const status = await hook(buildResult, this.buildState);
 
             // Merge errors and warnings from the hook status
             if (status) {
@@ -283,7 +297,7 @@ export class PluginsProvider {
     private async handleOnResolve(args: OnResolveArgs): Promise<OnResolveResult | null> {
         let result: OnResolveResult = {};
         for (const hook of this.onResolveHooks) {
-            const hookResult = await hook(args);
+            const hookResult = await hook(args, this.buildState);
             if (hookResult) {
                 result = {
                     ...result,
@@ -327,7 +341,7 @@ export class PluginsProvider {
         }
 
         for (const hook of this.onLoadHooks) {
-            const hookResult = await hook(result.contents ?? '', result.loader, args);
+            const hookResult = await hook(result.contents ?? '', result.loader, args, this.buildState);
             if (hookResult) {
                 result = {
                     ...result,

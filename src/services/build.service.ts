@@ -26,6 +26,7 @@ import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
 import { packageTypeComponent } from '@components/package-type.component';
+import type { BuildState } from '@providers/interfaces/plugins.interfaces';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -490,8 +491,9 @@ export class BuildService {
      * @private
      */
 
-    private async start(build: PluginBuild) {
+    private async start(build: PluginBuild, state: BuildState) {
         try {
+            state.startTime = Date.now();
             console.log(`${ prefix() } StartBuild ${ build.initialOptions.outdir }`);
 
             if (this.config.declaration)
@@ -511,18 +513,17 @@ export class BuildService {
      * Finalizes the build process and logs results.
      * This method handles the end of the build process, logs build results, and processes development files if applicable.
      *
-     * @param result - The result object from the build process.
-     *
      * @private
      */
 
-    private async end(result: BuildResult) {
+    private async end(result: BuildResult, state: BuildState) {
         if (result.errors.length > 0) {
             return this.handleErrors(result);
         }
 
+        const duration = Date.now() - <number> state.startTime;
         console.log(
-            `\n${ prefix() } ${ setColor(Colors.DeepOrange, 'Build completed!') }`
+            `\n${ prefix() } ${ setColor(Colors.DeepOrange, `Build completed! in ${ duration } ms`) }`
         );
         console.log(`${ prefix() } ${ Object.keys(result.metafile!.outputs).length } Modules:`);
         Object.keys(result.metafile!.outputs).forEach((output) => {

@@ -2,14 +2,13 @@
  * Import will remove at compile time
  */
 
-
+import type { SourceService } from '@remotex-labs/xmap';
+import type { ErrorType } from '@errors/interfaces/stack.interface';
 
 /**
  * Imports
  */
 
-import type { SourceService } from '@remotex-labs/xmap';
-import type { ErrorType } from '@errors/interfaces/stack.interface';
 import { formatStackTrace } from '@errors/stack.error';
 
 /**

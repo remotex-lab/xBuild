@@ -2,7 +2,6 @@
  * Import will remove at compile time
  */
 
-import type { EntryPoints } from '@configuration/interfaces/configuration.interface';
 import type {
     Node,
     Bundle,
@@ -26,7 +25,6 @@ import { TypesError } from '@errors/types.error';
 import { prefix } from '@components/banner.component';
 import { resolve, relative, dirname, parse } from 'path';
 import { Colors, setColor } from '@components/colors.component';
-import { extractEntryPoints } from '@components/entry-points.component';
 import {
     sys,
     factory,
@@ -138,12 +136,6 @@ export class TypeScriptProvider {
      * output directory. This ensures that the generated declaration files are accurate and the module paths are
      * aligned with the project's build structure.
      *
-     * @param entryPoints - An array of entry points or an object representing the entry files for which declarations
-     * are generated. Entry points can be provided in the following formats:
-     *   - An array of strings representing file paths (`string[]`).
-     *   - An array of objects with `in` and `out` properties (`{ in: string, out: string }[]`).
-     *   - A record object with file paths as values (`Record<string, string>`).
-     *
      * @param noTypeChecker - Skips TypeScript type checking.
      * @param allowError - A boolean flag indicating whether to throw an error if diagnostics are present. If set to
      * `true`, errors are logged but not thrown, allowing the process to continue. Defaults to `false`, which throws
@@ -158,9 +150,8 @@ export class TypeScriptProvider {
      * ```
      */
 
-    generateDeclarations(entryPoints: EntryPoints, noTypeChecker = false, allowError: boolean = false): void {
-        const files = Object.values(extractEntryPoints(entryPoints));
-        const program = createProgram(files, {
+    generateDeclarations(noTypeChecker = false, allowError: boolean = false): void {
+        const program = createProgram(this.tsConfig.fileNames, {
             ...this.options,
             rootDir: this.options.baseUrl,
             declaration: true,
@@ -171,7 +162,7 @@ export class TypeScriptProvider {
         // Collect diagnostics and check for errors
         const diagnostics = getPreEmitDiagnostics(program);
         if (!noTypeChecker && diagnostics.some(diagnostic => diagnostic.category === DiagnosticCategory.Error)) {
-            return this.handleDiagnostics(diagnostics, allowError);
+            this.handleDiagnostics(diagnostics, allowError);
         }
 
         // Emit declarations if no type errors were found

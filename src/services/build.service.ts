@@ -497,7 +497,7 @@ export class BuildService {
             console.log(`${ prefix() } StartBuild ${ build.initialOptions.outdir }`);
 
             if (this.config.declaration)
-                this.typeScriptProvider.generateDeclarations(this.config.esbuild.entryPoints, this.config.noTypeChecker, this.config.buildOnError);
+                this.typeScriptProvider.generateDeclarations(this.config.noTypeChecker, this.config.buildOnError);
             else if (!this.config.noTypeChecker)
                 this.typeScriptProvider.typeCheck(this.config.buildOnError);
         } finally {

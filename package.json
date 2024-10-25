@@ -65,13 +65,13 @@
         "typescript-eslint": "^8.11.0",
         "eslint-plugin-jsdoc": "^50.4.3",
         "@swc/jest": "^0.2.36",
-        "@types/jest": "^29.5.13",
-        "@types/node": "^22.7.8",
+        "@types/jest": "^29.5.14",
+        "@types/node": "^22.7.9",
         "@remotex-labs/xbuild": "^1.3.1"
     },
     "dependencies": {
         "yargs": "^17.7.2",
         "esbuild": "^0.24.0",
-        "@remotex-labs/xmap": "^2.0.3"
+        "@remotex-labs/xmap": "^2.0.4"
     }
 }

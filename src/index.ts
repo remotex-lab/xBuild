@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Exports
  */
@@ -11,8 +9,7 @@ export type { BuildResult, OnLoadArgs, OnLoadResult, OnResolveArgs, OnResolveRes
  * Import will remove at compile time
  */
 
-import type { xBuildError } from '@errors/xbuild.error';
-import type { VMRuntimeError } from '@errors/vm-runtime.error';
+import type { BuildResult } from 'esbuild';
 import type { ArgvInterface } from '@services/interfaces/cli.interface';
 
 /**
@@ -21,26 +18,39 @@ import type { ArgvInterface } from '@services/interfaces/cli.interface';
 
 import '@errors/stack.error';
 import '@errors/uncaught.error';
+import { existsSync } from 'fs';
 import { argvParser } from '@services/cli.service';
 import { BuildService } from '@services/build.service';
-import { bannerComponent } from '@components/banner.component';
-import { configuration } from '@providers/configuration.provider';
+import { parseConfigurationFile } from '@configuration/parse.configuration';
+import { cliConfiguration, configuration } from '@providers/configuration.provider';
+import type { PartialDeepConfigurationsType } from '@configuration/interfaces/configuration.interface';
 
 /**
  * Clean cli
  */
 
 global.__ACTIVE_COLOR = true;
-console.log(bannerComponent());
 
 /**
- * Main run
+ * Main run function that initiates the build process based on CLI arguments.
+ *
+ * This function parses the CLI arguments, configures the build settings, and executes
+ * the appropriate build tasks, including type checking, serving, or running in debug mode.
+ *
+ * @param argv - An array of strings representing the CLI arguments.
+ *
+ * @returns A promise that resolves when all build tasks are completed.
+ *
+ * @example
+ * ```ts
+ * await buildWithArgv(process.argv);
+ * ```
  */
 
-async function run() {
-    const cli = argvParser(process.argv);
+export async function buildWithArgv(argv: Array<string>) {
+    const cli = argvParser(argv);
     const args = <ArgvInterface> cli.argv;
-    const configs = await configuration(args.config, cli);
+    const configs = await cliConfiguration(args.config, cli);
     const buildPromises = configs.map(async (config): Promise<void> => {
         const build = new BuildService(config);
         if (args.typeCheck)
@@ -65,9 +75,59 @@ async function run() {
 }
 
 /**
- * Run entrypoint of xBuild
+ * Builds the project using a configuration file specified by its path.
+ *
+ * This function reads the configuration from the provided file path, processes it,
+ * and initiates the build tasks.
+ *
+ * @param configFilePath - The path to the configuration file to be used for the build.
+ *
+ * @returns A promise that resolves to an array of `BuildResult` objects once all build tasks are completed.
+ *
+ * @throws {Error} Throws an error if the configuration file does not exist or is invalid.
+ *
+ * @example
+ * ```typescript
+ * const results = await buildWithPath('./config.ts');
+ * console.log('Build results:', results);
+ * ```
  */
 
-run().catch((error: VMRuntimeError & xBuildError) => {
-    console.error(error.stack);
-});
+export async function buildWithConfigPath(configFilePath: string): Promise<BuildResult[]> {
+    const userConfig = existsSync(configFilePath) ? await parseConfigurationFile(configFilePath) : {};
+    const configs = await configuration(userConfig);
+    const buildPromises = configs.map(async (config): Promise<BuildResult> => {
+        const build = new BuildService(config);
+
+        return <BuildResult> await build.run();
+    });
+
+    return await Promise.all(buildPromises);
+}
+
+/**
+ * Builds the project based on the provided configuration object.
+ *
+ * This function processes the given configuration and executes the build tasks accordingly.
+ *
+ * @param config - A partial configuration object used to define the build settings.
+ *
+ * @returns A promise that resolves to an array of `BuildResult` objects once all build tasks are completed.
+ *
+ * @example
+ * ```typescript
+ * const results = await build({ entryPoints: ['./src/index.ts'] });
+ * console.log('Build results:', results);
+ * ```
+ */
+
+export async function build(config: PartialDeepConfigurationsType): Promise<BuildResult[]> {
+    const configs = await configuration(config);
+    const buildPromises = configs.map(async (config): Promise<BuildResult> => {
+        const build = new BuildService(config);
+
+        return <BuildResult> await build.run();
+    });
+
+    return await Promise.all(buildPromises);
+}

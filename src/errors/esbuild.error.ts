@@ -47,6 +47,9 @@ export class esBuildError extends BaseError {
 
         if (message.location) {
             this.stack = this.generateFormattedError(message);
+        } else {
+            this.originalErrorStack = this.stack;
+            this.stack = this.reformatStack(this);
         }
     }
 

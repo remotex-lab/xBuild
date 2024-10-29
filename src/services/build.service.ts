@@ -107,12 +107,17 @@ export class BuildService {
 
     /**
      * Executes the build process.
-     * This method performs the build and handles any errors that occur. If watching or development mode is enabled,
-     * it starts watching for changes. It logs errors that are not related to TypeScript.
+     * This method performs the build and handles any errors that occur during the execution.
+     * If watching or development mode is enabled in the configuration, it starts watching for changes
+     * to automatically rebuild as needed.
+     * The method logs errors that are not related to TypeScript
+     * compilation issues.
      *
-     * @returns A promise that resolves when the build process is complete.
+     * @returns A promise that resolves with a `BuildResult` when the build process is complete,
+     *          or `undefined` if an error occurs during execution.
      *
-     * @throws {Error} Throws an error if the build process encounters issues not related to TypeScript.
+     * @throws {Error} Throws an error if the build process encounters issues that are not related
+     *                 to TypeScript. Such errors are logged, but the method does not rethrow them.
      *
      * @example
      * ```typescript
@@ -126,16 +131,18 @@ export class BuildService {
      * });
      * ```
      *
-     * In this example, the `run` method is used to execute the build process. It handles both successful completion
-     * and errors.
+     * In this example, the `run` method is invoked to execute the build process. It handles both successful
+     * completion and logs any encountered errors, allowing the user to understand the outcome of the build.
      */
 
-    async run(): Promise<void> {
+    async run(): Promise<BuildResult | void> {
         return await this.execute(async () => {
             const result = await this.build();
             if (this.config.watch || this.config.dev) {
                 await (<BuildContext> result).watch();
             }
+
+            return <BuildResult> result;
         });
     }
 
@@ -213,38 +220,44 @@ export class BuildService {
     }
 
     /**
-     * Executes a provided callback function within a try-catch block.
+     * Executes a provided asynchronous callback function within a try-catch block.
      * This method ensures that any errors thrown during the execution of the callback
-     * are properly handled. If the error is related to esbuild's `OnEndResult` and contains
-     * an array of errors, it skips additional logging. Otherwise, it logs the error using
-     * a custom `VMRuntimeError`.
+     * are properly handled and logged. If the error appears to be an `esbuild`-related
+     * `OnEndResult` error with an array of errors, it avoids redundant logging.
+     * Otherwise, it wraps the error in a `VMRuntimeError` and logs the stack trace.
      *
-     * @param callback - A function that returns a `Promise<void>`, which is executed asynchronously.
-     *                   This callback is wrapped in error handling logic.
+     * @template T - The return type of the callback function, allowing flexibility
+     *               in the expected result type. Defaults to `BuildResult`.
      *
-     * @returns A `Promise<void>` which resolves once the callback has been executed.
-     *          If an error is thrown, it is caught and handled.
+     * @param callback - A function that returns a `Promise<T>`, which is executed asynchronously.
+     *                   The callback is wrapped in error handling logic to catch and process any exceptions.
      *
-     * @throws In case of an error not related to esbuild, the method catches the error,
-     *         wraps it in a `VMRuntimeError`, and logs the error's stack trace to the console.
+     * @returns A `Promise<T | void>` that resolves with the result of the callback function if successful,
+     *          or `void` if an error was thrown and handled. This allows for optional chaining on the return value.
+     *
+     * @throws This method does not throw explicitly but will log an error message if an exception is caught
+     *         and is not an `esbuild`-related error. The error stack is logged via `VMRuntimeError` for non-esbuild errors.
      *
      * @example
      * ```ts
      * await execute(async () => {
      *   // Perform some asynchronous operation here
+     *   return someResult;
      * });
      * ```
      */
 
-    private async execute(callback: () => Promise<void>): Promise<void> {
+    private async execute<T = BuildResult>(callback: () => Promise<T>): Promise<T | void> {
         try {
-            await callback();
+            return await callback();
         } catch (error: unknown) {
-            const esbuildError = <OnEndResult> error;
+            const esbuildError = error as OnEndResult;
             if (!Array.isArray(esbuildError.errors)) {
-                console.error(new VMRuntimeError(<Error> error).stack);
+                console.error(new VMRuntimeError(error as Error).stack);
             }
         }
+
+        return;
     }
 
     /**

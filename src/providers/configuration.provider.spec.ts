@@ -14,7 +14,7 @@ import ts from 'typescript';
 import { existsSync, readFileSync } from 'fs';
 import { xBuildLazy } from '@errors/stack.error';
 import { parseConfigurationFile } from '@configuration/parse.configuration';
-import { configuration, tsConfiguration } from '@providers/configuration.provider';
+import { cliConfiguration, configuration, tsConfiguration } from '@providers/configuration.provider';
 
 /**
  * Mocks
@@ -306,7 +306,7 @@ describe('configuration', () => {
             }
         });
 
-        const config = await configuration(mockConfigFilePath, mockArgv);
+        const config = await cliConfiguration(mockConfigFilePath, mockArgv);
         expect(config).toEqual([{
             ...defaultConfig,
             esbuild: {
@@ -339,7 +339,7 @@ describe('configuration', () => {
         (existsSync as jest.Mock).mockReturnValueOnce(true);
         (parseConfigurationFile as jest.Mock).mockReturnValueOnce({ esbuild: {} });
 
-        await expect(configuration(mockConfigFilePath, <any> { argv: {} }))
+        await expect(cliConfiguration(mockConfigFilePath, <any> { argv: {} }))
             .rejects
             .toThrow('entryPoints cannot be undefined.');
     });

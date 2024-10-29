@@ -6,10 +6,7 @@ import type { Argv } from 'yargs';
 import type { BuildOptions } from 'esbuild';
 import type { ParsedCommandLine } from 'typescript';
 import type { ArgvInterface } from '@services/interfaces/cli.interface';
-import type {
-    ConfigurationInterface,
-    PartialDeepConfigurationsType
-} from '@configuration/interfaces/configuration.interface';
+import type { ConfigurationInterface, PartialDeepConfigurationsType } from '@configuration/interfaces/configuration.interface';
 
 /**
  * Imports
@@ -90,10 +87,10 @@ function parseCliArgs(cli: Argv<ArgvInterface>): PartialDeepConfigurationsType {
  */
 
 export function tsConfiguration(options: BuildOptions): ParsedCommandLine {
-    const tsConfigFile = options.tsconfig ?? '';
+    const tsConfigFile = options.tsconfig ?? 'tsconfig.json';
     const configFile = existsSync(tsConfigFile) ? readFileSync(tsConfigFile, 'utf8') : JSON.stringify(defaultTsConfig);
-
     const parsedConfig = ts.parseConfigFileTextToJson(tsConfigFile, configFile);
+
     if (parsedConfig.error) {
         throw new xBuildError(ts.formatDiagnosticsWithColorAndContext([ parsedConfig.error ], {
             getCurrentDirectory: ts.sys.getCurrentDirectory,
@@ -115,20 +112,39 @@ export function tsConfiguration(options: BuildOptions): ParsedCommandLine {
 }
 
 /**
- * Merges CLI arguments with a configuration file to produce a final configuration object.
+ * Merges user configurations with CLI configurations and default settings
+ * to produce a final configuration object for the build process.
+ * This function handles both single and multiple user configurations,
+ * allowing for flexible configuration merging.
  *
- * @param configFile - The path to the configuration file to read and merge with CLI arguments.
- * @param cli - An instance of `Argv<ArgvInterface>` containing CLI arguments and options.
- * @returns A promise that resolves to the final `ConfigurationInterface` object.
- * @throws Error - Throws an error if the `entryPoints` property in the final configuration is undefined.
+ * @param userConfig - An array or a single object of type `PartialDeepConfigurationsType`
+ *                     representing the user's configurations to merge. If a single object
+ *                     is provided, it is wrapped in an array for processing.
+ * @param cliConfig - An optional object of type `PartialDeepConfigurationsType` representing
+ *                    the CLI configurations to merge with the user configurations. Defaults to an empty object.
+ * @returns An array of `ConfigurationInterface` objects, each representing a merged configuration.
+ *
+ * @throws {xBuildError} Throws an error if the `entryPoints` property in the merged configuration is undefined.
+ *                       This ensures that the configuration is valid and complete for further processing.
+ *
+ * @example
+ * ```typescript
+ * import { configuration } from './configuration';
+ *
+ * const userConfigs = [
+ *     { esbuild: { entryPoints: ['src/index.ts'] } },
+ *     { serve: { port: 3000 } }
+ * ];
+ * const cliConfigs = { esbuild: { minify: true } };
+ *
+ * const finalConfigs = await configuration(userConfigs, cliConfigs);
+ * console.log('Merged Configuration:', finalConfigs);
+ * ```
  */
 
-export async function configuration(configFile: string, cli: Argv<ArgvInterface>): Promise<Array<ConfigurationInterface>> {
-    const cliConfig = parseCliArgs(cli);
-    const userConfig = existsSync(configFile) ? await parseConfigurationFile(configFile) : {};
-
+export async function configuration(userConfig: Array<PartialDeepConfigurationsType> | PartialDeepConfigurationsType, cliConfig: PartialDeepConfigurationsType = {}) {
     // Check if userConfig is an array and handle accordingly
-    const userConfigs: Array<ConfigurationInterface> = Array.isArray(userConfig) ? userConfig : [ userConfig ];
+    const userConfigs: Array<PartialDeepConfigurationsType> = Array.isArray(userConfig) ? userConfig : [ userConfig ];
     const defaultUserConfig = userConfigs[0];
 
     return userConfigs.flatMap<ConfigurationInterface>((userConfigEntry) => {
@@ -157,4 +173,39 @@ export async function configuration(configFile: string, cli: Argv<ArgvInterface>
 
         return mergedConfig;
     });
+}
+
+/**
+ * Merges CLI arguments with a configuration file to produce a final configuration object.
+ * This function reads the specified configuration file and merges its contents with
+ * the CLI arguments provided. The resulting configuration will be validated to ensure
+ * that required properties, such as `entryPoints`, are defined.
+ *
+ * @param configFile - The path to the configuration file to read and merge with CLI arguments.
+ * @param cli - An instance of `Argv<ArgvInterface>` containing CLI arguments and options.
+ * @returns A promise that resolves to an array of `ConfigurationInterface` objects, representing
+ *          the final merged configuration.
+ * @throws {Error} Throws an error if the `entryPoints` property in the final configuration is undefined.
+ *                 This ensures that the configuration is valid for further processing.
+ *
+ * @example
+ * ```typescript
+ * import { cliConfiguration } from './cli-configuration';
+ *
+ * const configFilePath = './config.json';
+ * const cliArgs = argv(); // Assuming `argv` is a function that retrieves CLI arguments
+ *
+ * cliConfiguration(configFilePath, cliArgs).then((finalConfig) => {
+ *     console.log('Final configuration:', finalConfig);
+ * }).catch((error) => {
+ *     console.error('Error loading configuration:', error);
+ * });
+ * ```
+ */
+
+export async function cliConfiguration(configFile: string, cli: Argv<ArgvInterface>): Promise<Array<ConfigurationInterface>> {
+    const cliConfig = parseCliArgs(cli);
+    const userConfig = existsSync(configFile) ? await parseConfigurationFile(configFile) : {};
+
+    return configuration(userConfig, cliConfig);
 }

@@ -105,6 +105,7 @@ function wrapConfigFunctionsWithSourcemap(
 
 export async function parseConfigurationFile(file: string): Promise<ConfigurationInterface> {
     const { code, sourceMap } = await transpileFile(file, {
+        packages: 'external',
         banner: { js: '(function(module, exports) {' },
         footer: { js: '})(module, module.exports);' }
     });

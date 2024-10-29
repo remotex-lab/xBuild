@@ -27,7 +27,7 @@ import type { EntryPoints } from '@configuration/interfaces/configuration.interf
 export const defaultBuildOptions: BuildOptions = {
     write: false,
     bundle: true,
-    minify: false,
+    minify: true,
     format: 'cjs',
     target: 'esnext',
     platform: 'node',

@@ -3,6 +3,7 @@
  */
 
 import type { ChildProcessWithoutNullStreams } from 'child_process';
+import type { BuildState } from '@providers/interfaces/plugins.interfaces';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
 import type { BuildContext, BuildResult, Message, Metafile, OnEndResult, PluginBuild, SameShape } from 'esbuild';
 
@@ -26,7 +27,6 @@ import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
 import { packageTypeComponent } from '@components/package-type.component';
-import type { BuildState } from '@providers/interfaces/plugins.interfaces';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -252,7 +252,9 @@ export class BuildService {
             return await callback();
         } catch (error: unknown) {
             const esbuildError = error as OnEndResult;
-            if (!Array.isArray(esbuildError.errors)) {
+            if (Array.isArray(esbuildError.errors) && (!this.config.watch || !this.config.dev || !this.config.serve.active)) {
+                this.handleErrors(esbuildError);
+            } else {
                 console.error(new VMRuntimeError(error as Error).stack);
             }
         }
@@ -401,7 +403,7 @@ export class BuildService {
                 }
 
                 if (error.detail instanceof Error) {
-                    console.error(new VMRuntimeError(error.detail).originalErrorStack);
+                    console.error(new VMRuntimeError(error.detail).stack);
                     continue;
                 }
             }

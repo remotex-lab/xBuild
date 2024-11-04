@@ -69,7 +69,8 @@ Options:
 
 ## Configuration
 
-The `xBuild` configuration file allows you to customize various settings for the build and development process. By default, xbuild uses `xbuild.config.ts` (`--config` change it). Here’s how you can configure it:
+The `xBuild` configuration file allows you to customize various settings for the build and development process.
+By default, xbuild uses `xbuild.config.ts` (`--config` change it). Here’s how you can configure it:
 
 ### Example Configuration
 ```typescript
@@ -93,4 +94,155 @@ const config: ConfigurationInterface = {
         }
     }
 };
+```
+
+You can also define multiple configurations as an array:
+```typescript
+/**
+ * Import will remove at compile time
+ */
+
+import type { xBuildConfig } from '@remotex-labs/xbuild';
+
+/**
+ * Imports
+ */
+
+import { version } from 'process';
+import pkg from './package.json' with { type: 'json' };
+
+/**
+ * Config build
+ */
+
+const config: Array<xBuildConfig> = [
+    {
+        declaration: true,
+        esbuild: {
+            bundle: true,
+            minify: true,
+            format: 'esm',
+            outdir: 'dist/esm',
+            target: [ `node${ version.slice(1) }` ],
+            platform: 'node',
+            packages: 'external',
+            sourcemap: true,
+            sourceRoot: `https://github.com/remotex-lab/xmap/tree/v${ pkg.version }/`,
+            entryPoints: [ 'src/index.ts' ]
+        }
+    },
+    {
+        declaration: false,
+        noTypeChecker: true,
+        esbuild: {
+            bundle: true,
+            format: 'cjs',
+            outdir: 'dist/cjs'
+        }
+    }
+];
+
+export default config;
+```
+
+## Using the ifdef Plugin
+The `ifdef` plugin in `xBuild` helps conditionally include or exclude code based on defined variables. Here’s an example:
+```typescript
+// main.ts
+
+console.log("This code always runs");
+
+// If the `DEBUG` flag is set in your build config, this block will be included
+// ifdef DEBUG
+console.log("Debug mode is enabled");
+// endif
+
+// ifdef FEATURE_X
+console.log("Feature X is active");
+// endif
+```
+
+### Setting Conditions in Configuration
+To enable these blocks during the build, define your conditions in the `xBuild` configuration file:
+```typescript
+export default {
+    esbuild: {
+        entryPoints: ['./src/main.ts'],
+        outdir: 'dist',
+        minify: false,
+        format: 'esm',
+        bundle: true,
+    },
+    ifdef: {
+        DEBUG: true,        // Enables the DEBUG section
+        FEATURE_X: false,    // Excludes the FEATURE_X section
+    }
+};
+```
+In this example:
+* When `DEBUG` is set to `true`, the `Debug mode is enabled` message is included.
+* When `FEATURE_X` is `false`, the `console.log("Feature X is active");` line is excluded.
+
+This approach helps manage feature toggles and debug code efficiently, making it possible to build different versions of your code based on configuration.
+
+## Hooks 
+The `hooks` interface provides a structure for lifecycle hooks to customize the build process.
+```typescript
+export interface hooks {
+    onEnd: OnEndType;
+    onLoad: OnLoadType;
+    onStart: OnStartType;
+    onResolve: OnResolveType;
+}
+```
+
+```typescript
+/**
+ * Import will remove at compile time
+ */
+
+import type { xBuildConfig } from '@remotex-labs/xbuild';
+
+/**
+ * Imports
+ */
+
+import { version } from 'process';
+import pkg from './package.json' with { type: 'json' };
+
+/**
+ * Config build
+ */
+
+const config: xBuildConfig = {
+    dev: true,
+    watch: true,
+    declaration: true,
+    buildOnError: false,
+    noTypeChecker: false,
+    esbuild: {
+        entryPoints: ['./src/index.ts'],
+        bundle: true,
+        minify: true,
+        target: 'es2020'
+    },
+    serve: {
+        port: 8080,
+        host: 'localhost',
+        active: true // can be activeate using -s insted 
+    },
+    hooks: {
+        onStart: async (build) => {
+            console.log('Build started');
+        },
+        onEnd: async (result) => {
+            console.log('Build finished:', result);
+        }
+    },
+    define: {
+        '__ENV__': 'development',
+    }
+};
+
+export default config;
 ```

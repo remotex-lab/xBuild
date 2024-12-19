@@ -96,7 +96,7 @@ describe('RemoteX Transpiler', () => {
 
         test('should throw an error if the source map URL is not found', () => {
             const dataString = 'console.log("hello world");';
-            const spy = jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
+            jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
                 file: 'x'
             });
 
@@ -122,7 +122,7 @@ describe('RemoteX Transpiler', () => {
 
         beforeEach(() => {
             mockedBuild.mockResolvedValue(<any> {
-                outputFiles: [ { text: transpiledCode } ]
+                outputFiles: [{ text: transpiledCode }]
             });
         });
 

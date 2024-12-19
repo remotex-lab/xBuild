@@ -44,7 +44,32 @@ import { Script, createContext } from 'vm';
  */
 
 export function sandboxExecute(code: string, sandbox: Context = {}) {
+    /**
+     * Why instanceof Fails:
+     * The instanceof operator relies on the prototype chain
+     * to check whether an object is an instance of a particular constructor.
+     * However, in your sandboxed environment, the RegExp object might come from a different execution context (the sandbox),
+     * and that context might have its own RegExp constructor,
+     * which differs from the RegExp constructor in the main Node.js context.
+     *
+     * As a result:
+     * mangleProps instanceof RegExp fails
+     * because the RegExp constructor used in the sandbox might not be the same RegExp constructor
+     * that exists in the main context.
+     * Thus, the object doesn't match the expected prototype chain.
+     *
+     * Why Object.prototype.toString Works:
+     * On the other hand,
+     * Object.prototype.toString.call(mangleProps)
+     * is a low-level check that looks at the internal class of the object,
+     * not its prototype chain.
+     * Since it doesn't depend on the execution context,
+     * it will correctly identify the object as a RegExp regardless of which context it was created in.
+     */
+
+    sandbox.RegExp = RegExp;
     sandbox.console = console;
+
     const script = new Script(code);
     const context = createContext(sandbox);
 

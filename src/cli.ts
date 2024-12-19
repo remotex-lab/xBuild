@@ -26,4 +26,5 @@ console.log(bannerComponent());
 
 buildWithArgv(process.argv).catch((error: VMRuntimeError & xBuildError) => {
     console.error(error.stack);
+    process.exit(1);
 });

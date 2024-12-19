@@ -66,7 +66,7 @@ describe('ExtractEntryPoints', () => {
      */
 
     test('should handle array of strings', () => {
-        const entryPoints = ['src/index.ts', 'src/utils.ts'];
+        const entryPoints = [ 'src/index.ts', 'src/utils.ts' ];
         expect(extractEntryPoints(entryPoints)).toEqual({
             'src/index': 'src/index.ts',
             'src/utils': 'src/utils.ts'
@@ -117,8 +117,8 @@ describe('ExtractEntryPoints', () => {
      */
 
     test('should throw error for unsupported format', () => {
-        const spy = jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
-            file: 'x',
+        jest.spyOn(xBuildLazy, 'service', 'get').mockReturnValue(<any> {
+            file: 'x'
         });
 
         expect(() => extractEntryPoints(123 as any)).toThrow('Unsupported entry points format');

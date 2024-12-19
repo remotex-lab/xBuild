@@ -28,7 +28,7 @@ describe('VMRuntimeError', () => {
             sourceRoot: 'src/',
             line: 10,
             column: 5,
-            code: 'const a = 1;',
+            code: 'const a = 1;'
         });
     });
 

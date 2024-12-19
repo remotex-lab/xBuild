@@ -14,7 +14,7 @@ import ts from 'typescript';
 import { existsSync, readFileSync } from 'fs';
 import { xBuildLazy } from '@errors/stack.error';
 import { parseConfigurationFile } from '@configuration/parse.configuration';
-import { cliConfiguration, configuration, tsConfiguration } from '@providers/configuration.provider';
+import { cliConfiguration, tsConfiguration } from '@providers/configuration.provider';
 
 /**
  * Mocks

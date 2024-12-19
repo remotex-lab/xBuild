@@ -11,7 +11,7 @@ import { SourceService } from '@remotex-labs/xmap';
 
 jest.mock('fs', () => ({
     ...jest.requireActual('fs'),
-    readFileSync: jest.fn().mockImplementation((path: string) => {
+    readFileSync: jest.fn().mockImplementation(() => {
         return JSON.stringify({
             version: 3,
             file: 'index.js',
@@ -34,9 +34,9 @@ jest.mock('@remotex-labs/xmap', () => ({
             code: 'const a = 1;'
         })
     })),
-    formatErrorCode: (position: any, options: any) => `formatted ${position.code}`,
+    formatErrorCode: (position: any) => `formatted ${position.code}`,
     highlightCode: (code: any) => `highlighted ${code}`,
-    parseErrorStack: (stack: string) => [
+    parseErrorStack: () => [
         { file: 'file.js', line: 10, column: 5, at: 'name ' }
     ]
 }));

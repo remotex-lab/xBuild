@@ -88,5 +88,14 @@ export default tseslint.config(
         rules: {
             '@typescript-eslint/no-explicit-any': 'off'
         }
+    },
+    {
+        ignores: [
+            'dist/*',
+            '**/*.js',
+            'includes/*',
+            'jest.config.cjs',
+            'eslint.config.mjs'
+        ]
     }
 );

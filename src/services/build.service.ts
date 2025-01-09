@@ -575,7 +575,7 @@ export class BuildService {
             entryPointsList = [];
         }
 
-        for (const file in meta.inputs) {
+        for (const file in meta.metafile.inputs) {
             if (entryPointsList.includes(file))
                 continue;
 

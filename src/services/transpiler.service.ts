@@ -2,7 +2,8 @@
  * Import will remove at compile time
  */
 
-import type { BuildOptions, Metafile } from 'esbuild';
+import type { BuildOptions, BuildResult, Metafile } from 'esbuild';
+import type { EntryPoints } from '@configuration/interfaces/configuration.interface';
 import type { transpileFileInterface } from '@services/interfaces/transpiler.interface';
 
 /**
@@ -12,7 +13,6 @@ import type { transpileFileInterface } from '@services/interfaces/transpiler.int
 import { cwd } from 'process';
 import { build } from 'esbuild';
 import { xBuildError } from '@errors/xbuild.error';
-import type { EntryPoints } from '@configuration/interfaces/configuration.interface';
 
 /**
  * Default build options for esbuild bundler in RemoteX framework.
@@ -95,34 +95,49 @@ export async function transpileFile(filePath: string, buildOptions: BuildOptions
 }
 
 /**
- * Analyzes the dependencies of a given entry point using esbuild.
+ * The `analyzeDependencies` function analyzes the dependencies of a given entry point for a specified platform.
+ * It performs a bundling operation and generates a metafile that contains detailed information about the
+ * dependencies involved in the build process.
+ * This is typically used to inspect the external packages and modules
+ * that the entry point depends on.
  *
- * This function bundles the specified entry point without writing the output files to disk.
- * Instead, it generates a metafile that contains detailed information about the dependencies
- * and imports used in the bundled code. The metafile is returned as a result of the analysis.
+ * - **Input**:
+ *   - `entryPoint`: A string or array of strings representing the entry points for the build.
+ *   This defines the starting point(s) for the bundling process.
+ *   - `platform`: An optional parameter that specifies the platform to target for the build.
+ *   Default is `'browser'`.
  *
- * @param entryPoint - The path to the entry point file that should be analyzed.
- * @param platform - The platform for which the code is being analyzed.
- *        'browser' indicates that the code is intended for a browser environment,
- *        'node' indicates a Node.js environment, and 'neutral' is platform-agnostic.
- * @returns A promise that resolves to the metafile containing the analysis of dependencies.
- * @throws Error - Throws an error if the build process fails.
+ * - **Output**: A `Promise` that resolves to an object containing:
+ *   - The `BuildResult` from the bundling process.
+ *   - A `metafile`, which contains detailed metadata about the build, including the dependencies analyzed.
  *
- * @public
- * @category Services
+ * ## Example:
+ *
+ * ```ts
+ * const result = await analyzeDependencies(['src/index.ts']);
+ * console.log(result.metafile); // { inputs: { 'src/index.ts': { ... } }, outputs: { ... } }
+ *
+ * const nodeResult = await analyzeDependencies(['src/server.ts'], 'node');
+ * console.log(nodeResult.metafile); // { inputs: { 'src/server.ts': { ... } }, outputs: { ... } }
+ * ```
+ *
+ * @param entryPoint - The entry point(s) to be analyzed.
+ * @param platform - The target platform for the build.
+ * @returns A `Promise` that resolves to a `BuildResult` object along with a `metafile` containing dependency details.
+ * @throws {Error} If the build process fails for any reason.
  */
 
-export async function analyzeDependencies(entryPoint: EntryPoints, platform: 'browser' | 'node' | 'neutral' = 'browser'): Promise<Metafile> {
-    const result = await build({
-        entryPoints: entryPoint,
-        bundle: true, // Bundle to analyze imports
+export async function analyzeDependencies(entryPoint: EntryPoints, platform: BuildOptions['platform'] = 'browser'): Promise<
+    BuildResult & { metafile: Metafile }
+> {
+    return await build({
+        outdir: 'tmp',
         write: false, // Prevent writing output files
+        bundle: true, // Bundle to analyze imports
         metafile: true, // Generate a metafile to analyze dependencies
         platform: platform,
         packages: 'external',
         logLevel: 'silent',
-        outdir: 'dist'
+        entryPoints: entryPoint
     });
-
-    return result.metafile;
 }

@@ -120,6 +120,9 @@ export class ServerProvider {
      */
 
     start(): void {
+        if (this.config.onStart)
+            this.config.onStart();
+
         if (this.isHttps)
             return this.startHttpsServer();
 

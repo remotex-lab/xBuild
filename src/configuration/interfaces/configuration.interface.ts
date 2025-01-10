@@ -128,6 +128,9 @@ export interface ModuleInterface {
  *         host: 'localhost',
  *         keyfile: '/path/to/ssl/keyfile.pem',
  *         certfile: '/path/to/ssl/certfile.pem',
+ *         onStart: () => {
+ *             console.log('Server started');
+ *         }
  *         onRequest: (req, res, next) => {
  *             console.log('Server request received');
  *             next();
@@ -145,7 +148,8 @@ export interface Serve {
     active: boolean,
     keyfile?: string
     certfile?: string,
-    onRequest?: (req: IncomingMessage, res: ServerResponse, next: () => void) => void
+    onRequest?: (req: IncomingMessage, res: ServerResponse, next: () => void) => void,
+    onStart?: () => void
 }
 
 /**

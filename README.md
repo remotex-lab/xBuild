@@ -246,3 +246,24 @@ const config: xBuildConfig = {
 
 export default config;
 ```
+
+## Using the ifdef and macros
+```typescript
+// main.ts
+
+console.log("This code always runs");
+
+// If the `DEBUG` flag is set in your build config, this block will be included
+// ifdef DEBUG
+export function $$logger(...args: Array<unknown>): void {
+    console.log(...args);
+}
+// endif
+
+// ifdef FEATURE_X
+console.log("Feature X is active");
+// endif
+
+
+$$logger('data'); // will be delited if $$logger not exsist
+```

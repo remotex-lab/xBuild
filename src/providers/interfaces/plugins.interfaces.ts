@@ -3,10 +3,11 @@
  */
 
 import type {
-    BuildResult,
+    Loader,
     OnLoadArgs,
-    PluginBuild,
+    BuildResult,
     OnEndResult,
+    PluginBuild,
     OnLoadResult,
     OnResolveArgs,
     OnResolveResult
@@ -21,8 +22,8 @@ import type {
  * @template T - The type of values that can be stored in the state.
  */
 
-export interface BuildState<T = unknown> {
-    [key: string]: T; // Allows users to add any custom data they want
+export interface BuildState {
+    [key: string]: unknown; // Allows users to add any custom data they want
 }
 
 /**
@@ -77,7 +78,7 @@ export type OnResolveType = (args: OnResolveArgs, state: BuildState) => Promise<
 
 export type OnLoadType = (
     content: string | Uint8Array,
-    loader: string | undefined,
+    loader: Loader | undefined,
     args: OnLoadArgs,
     state: BuildState
 ) => Promise<OnLoadResult | pluginResultType> | OnLoadResult | pluginResultType;

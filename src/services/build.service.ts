@@ -4,8 +4,19 @@
 
 import type { ChildProcessWithoutNullStreams } from 'child_process';
 import type { BuildState } from '@providers/interfaces/plugins.interfaces';
+import type { BuildStateInterface } from '@plugins/interfaces/plugin.interface';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
-import type { BuildContext, BuildResult, Message, Metafile, OnEndResult, PluginBuild, SameShape } from 'esbuild';
+import type {
+    Loader,
+    Message,
+    Metafile,
+    SameShape,
+    OnLoadArgs,
+    OnEndResult,
+    PluginBuild,
+    BuildResult,
+    BuildContext
+} from 'esbuild';
 
 /**
  * Imports
@@ -14,6 +25,7 @@ import type { BuildContext, BuildResult, Message, Metafile, OnEndResult, PluginB
 import { dirname, resolve } from 'path';
 import { build, context } from 'esbuild';
 import { spawn } from '@services/process.service';
+import { parseMacros } from '@plugins/macro.plugin';
 import { esBuildError } from '@errors/esbuild.error';
 import { prefix } from '@components/banner.component';
 import { VMRuntimeError } from '@errors/vm-runtime.error';
@@ -281,6 +293,9 @@ export class BuildService {
         const paths = this.generatePathAlias(rootDir);
 
         this.registerPluginHooks(paths, rootDir);
+        this.pluginsProvider.registerOnLoad(async (content: string | Uint8Array, loader: Loader | undefined, args: OnLoadArgs, state) => {
+            return await parseMacros(content, loader, args, <BuildStateInterface> state, this.config);
+        });
     }
 
     /**
@@ -575,7 +590,7 @@ export class BuildService {
             entryPointsList = [];
         }
 
-        for (const file in meta.inputs) {
+        for (const file in meta.metafile.inputs) {
             if (entryPointsList.includes(file))
                 continue;
 

@@ -3,19 +3,18 @@
  */
 
 import type { BuildOptions } from 'esbuild';
+import { build } from 'esbuild';
 
 /**
  * Imports
  */
-
 import { cwd } from 'process';
-import { build } from 'esbuild';
 import { xBuildLazy } from '@errors/stack.error';
 import {
-    transpileFile,
-    extractSourceMap,
     analyzeDependencies,
-    defaultBuildOptions
+    defaultBuildOptions,
+    extractSourceMap,
+    transpileFile
 } from '@services/transpiler.service';
 
 /**
@@ -278,7 +277,7 @@ describe('analyzeDependencies', () => {
             platform: platform,
             logLevel: 'silent'
         }));
-        expect(result).toBe(mockMetafile);
+        expect(result).toEqual({ metafile: mockMetafile });
     });
 
     /**
@@ -302,7 +301,7 @@ describe('analyzeDependencies', () => {
             platform: platform,
             logLevel: 'silent'
         }));
-        expect(result).toBe(mockMetafile);
+        expect(result).toEqual({ metafile: mockMetafile });
     });
 
     /**
@@ -326,7 +325,7 @@ describe('analyzeDependencies', () => {
             platform: platform,
             logLevel: 'silent'
         }));
-        expect(result).toBe(mockMetafile);
+        expect(result).toEqual({ metafile: mockMetafile });
     });
 
     /**

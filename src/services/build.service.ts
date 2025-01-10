@@ -443,6 +443,7 @@ export class BuildService {
         if (this.config.hooks) {
             this.pluginsProvider.registerOnEnd(this.config.hooks.onEnd);
             this.pluginsProvider.registerOnLoad(this.config.hooks.onLoad);
+            this.pluginsProvider.registerOnEnd(this.config.hooks.onSuccess);
             this.pluginsProvider.registerOnStart(this.config.hooks.onStart);
             this.pluginsProvider.registerOnResolve(this.config.hooks.onResolve);
         }

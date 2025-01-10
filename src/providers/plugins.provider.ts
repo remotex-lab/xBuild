@@ -47,6 +47,13 @@ export class PluginsProvider {
     private onEndHooks: Array<OnEndType> = [];
 
     /**
+     * Holds the registered hooks for the `onSuccess` lifecycle event.
+     * This array contains functions that are called after the build success finish.
+     */
+
+    private onSuccess: Array<OnEndType> = [];
+
+    /**
      * Holds the registered hooks for the `onLoad` lifecycle event.
      * This array contains functions that are called when esbuild attempts to load a module.
      */
@@ -103,6 +110,25 @@ export class PluginsProvider {
     registerOnEnd(fn: OnEndType | undefined): void {
         if (fn)
             this.onEndHooks.push(fn);
+    }
+
+    /**
+     * Registers a hook function for the `onSuccess` lifecycle event.
+     * The hook will be called after the build success completes.
+     *
+     * @param fn - A function of type `OnEndType` that will be executed after the build completes.
+     *
+     * @example
+     * ```typescript
+     * pluginProvider.registerOnSuccess(async (result) => {
+     *   console.log('Build Success finished:', result);
+     * });
+     * ```
+     */
+
+    registerOnSuccess(fn: OnEndType | undefined): void {
+        if (fn)
+            this.onSuccess.push(fn);
     }
 
     /**
@@ -256,7 +282,6 @@ export class PluginsProvider {
             // Update buildResult with the current errors and warnings from result
             buildResult.errors = <Message[]> result.errors;
             buildResult.warnings = <Message[]> result.warnings;
-
             const status = await hook(buildResult, this.buildState);
 
             // Merge errors and warnings from the hook status
@@ -266,6 +291,12 @@ export class PluginsProvider {
 
                 if (status.warnings?.length)
                     result.warnings.push(...status.warnings);
+            }
+        }
+
+        if(result.errors.length < 1) {
+            for (const hook of this.onSuccess) {
+                await hook(buildResult, this.buildState);
             }
         }
 

@@ -193,6 +193,7 @@ export interface hooks {
     onEnd: OnEndType,
     onLoad: OnLoadType,
     onStart: OnStartType,
+    onSuccess: OnEndType
     onResolve: OnResolveType,
 }
 

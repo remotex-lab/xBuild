@@ -265,5 +265,5 @@ console.log("Feature X is active");
 // endif
 
 
-$$logger('data'); // will be delited if $$logger not exsist
+$$logger('data'); // will be deleted if $$logger not exist
 ```

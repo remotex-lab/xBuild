@@ -203,7 +203,7 @@ function transformSourceCode(sourceFile: ts.SourceFile, state: BuildStateInterfa
 export async function parseMacros(
     content: string | Uint8Array, loader: Loader | undefined, args: OnLoadArgs, state: BuildStateInterface, config: ConfigurationInterface
 ): Promise<OnLoadResult | pluginResultType | undefined> {
-    if (!args.path.endsWith('.ts') || !args.path.endsWith('.js')) return { loader: loader, contents: content };
+    if (!args.path.endsWith('.ts') && !args.path.endsWith('.js')) return { loader: loader, contents: content };
     if (!state.macros) {
         state.macros = {
             removeFunctions: new Set<string>()

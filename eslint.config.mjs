@@ -51,7 +51,7 @@ export default tseslint.config(
             'linebreak-style': ['error', 'unix'],
             'array-bracket-spacing': ['error', 'always', {
                 objectsInArrays: false,
-                arraysInArrays: true
+                arraysInArrays: false
             }],
 
             'object-curly-spacing': [2, 'always'],

@@ -146,7 +146,7 @@ export default config;
 ```
 
 ## Using the ifdef Plugin
-The `ifdef` plugin in `xBuild` helps conditionally include or exclude code based on defined variables. Here’s an example:
+The `ifdef` plugin in `xBuild` allows to conditionally include or exclude code based on defined variables. Here’s an example:
 ```typescript
 // main.ts
 
@@ -183,7 +183,7 @@ In this example:
 * When `DEBUG` is set to `true`, the `Debug mode is enabled` message is included.
 * When `FEATURE_X` is `false`, the `console.log("Feature X is active");` line is excluded.
 
-This approach helps manage feature toggles and debug code efficiently, making it possible to build different versions of your code based on configuration.
+This approach helps to manage feature toggles and debug code efficiently, making it possible to build different versions of your code based on a configuration.
 
 ## Hooks 
 The `hooks` interface provides a structure for lifecycle hooks to customize the build process.
@@ -198,7 +198,7 @@ export interface hooks {
 
 ```typescript
 /**
- * Import will remove at compile time
+ * Imports will be remove at compile time
  */
 
 import type { xBuildConfig } from '@remotex-labs/xbuild';
@@ -229,7 +229,7 @@ const config: xBuildConfig = {
     serve: {
         port: 8080,
         host: 'localhost',
-        active: true // can be activeate using -s insted 
+        active: true // can be activeate using -s instead 
     },
     hooks: {
         onStart: async (build) => {
@@ -265,5 +265,5 @@ console.log("Feature X is active");
 // endif
 
 
-$$logger('data'); // will be deleted if $$logger not exist
+$$logger('data'); // will be deleted if $$logger does not exist
 ```

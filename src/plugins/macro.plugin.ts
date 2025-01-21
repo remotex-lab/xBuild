@@ -10,6 +10,7 @@ import type { ConfigurationInterface } from '@configuration/interfaces/configura
 /**
  * Imports
  */
+
 import ts from 'typescript';
 import { promises } from 'fs';
 import { analyzeDependencies } from '@services/transpiler.service';
@@ -62,6 +63,14 @@ export function collectFunctionNames(code: string, state: BuildStateInterface['m
                     state.removeFunctions.add(declaration.name.text);
                 }
             });
+
+            return;
+        }
+
+        if(ts.isIdentifier(node) && ts.isExpression(node) && node.escapedText && node.escapedText.startsWith('$$')) {
+            state.removeFunctions.add(node.escapedText);
+
+            return;
         }
 
         // Recursively visit child nodes
@@ -70,7 +79,6 @@ export function collectFunctionNames(code: string, state: BuildStateInterface['m
 
     visitNode(sourceFile);
 }
-
 
 /**
  * The `collectDeclaredFunctions` function processes the provided `meta` metafile and reads each file's contents
@@ -101,7 +109,6 @@ export function collectFunctionNames(code: string, state: BuildStateInterface['m
  * @param state - The build state containing the `removeFunctions` set to store function names to be removed.
  * @returns `void` - The function modifies the `state` directly and does not return a value.
  */
-
 
 export async function collectDeclaredFunctions(meta: Metafile, config: ConfigurationInterface, state: BuildStateInterface['macros']) {
     const files = Object.keys(meta.inputs);
@@ -152,6 +159,18 @@ function transformSourceCode(sourceFile: ts.SourceFile, state: BuildStateInterfa
 
                 if (functionName.startsWith('$$') && state.removeFunctions.has(functionName)) {
                     return ts.factory.createIdentifier('undefined');
+                }
+
+                // Check if the left-hand side is a PropertyAccessExpression (i.e., object.$$methodName())
+                const expression = node.expression;
+                if (ts.isPropertyAccessExpression(expression)) {
+                    const methodName = expression.name;
+
+                    // Ensure it's an identifier and check if the method name starts with '$$'
+                    if (ts.isIdentifier(methodName) && methodName.text.startsWith('$$')) {
+                        // Mark this method for removal or take any other action
+                        return ts.factory.createIdentifier('undefined');
+                    }
                 }
             }
 

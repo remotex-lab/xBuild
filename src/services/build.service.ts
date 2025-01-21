@@ -15,13 +15,15 @@ import type {
     OnEndResult,
     PluginBuild,
     BuildResult,
-    BuildContext
+    BuildContext,
+    BuildOptions
 } from 'esbuild';
 
 /**
  * Imports
  */
 
+import * as process from 'node:process';
 import { dirname, resolve } from 'path';
 import { build, context } from 'esbuild';
 import { spawn } from '@services/process.service';
@@ -39,7 +41,6 @@ import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
 import { packageTypeComponent } from '@components/package-type.component';
-import * as process from 'node:process';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -429,6 +430,48 @@ export class BuildService {
     }
 
     /**
+     * Injects a configuration object (banner or footer) into the `esbuild` options.
+     * This method will update the `esbuild` object by adding or modifying the `banner` or `footer`
+     * property based on the provided configuration.
+     * The function handles both static values
+     * and functions within the configuration.
+     *
+     * @param esbuild - The `esbuild` configuration object where the `banner` or `footer`
+     *                  should be injected or updated.
+     * @param object - The configuration object that contains the properties to inject.
+     *                 The properties can either be static values or functions.
+     * @param name - A string that determines whether the method modifies the `banner` or `footer`
+     *               property of the `esbuild` object.
+     *
+     * @returns void - This method does not return any value.
+     * It modifies the `esbuild` object directly.
+     *
+     * @throws {Error} - If the `object` parameter is not provided, nothing is injected.
+     *                   No action will be taken if the specific `name` property (either
+     *                   'banner' or 'footer') does not exist in the `esbuild` object.
+     */
+
+    private injects(esbuild: BuildOptions, object: ConfigurationInterface['banner'], name: 'banner' | 'footer'): void {
+        if(!object) return;
+        if(!esbuild[name]) esbuild[name] = {};
+        const accessKey = esbuild[name];
+
+        for (const key in object) {
+            if (object.hasOwnProperty(key)) {
+                const value = object[key];
+                if(typeof value === 'function') {
+                    console.log(`${ prefix() } trigger ${ name } function`);
+                    accessKey[key] = value();
+
+                    continue;
+                }
+
+                accessKey[key] = value;
+            }
+        }
+    }
+
+    /**
      * Builds the project based on the configuration.
      * Depending on the configuration, this method either uses esbuild's `context` for watching or `build` for a one-time build.
      *
@@ -462,6 +505,9 @@ export class BuildService {
         }
 
         esbuild.plugins = [ this.pluginsProvider.setup() ];
+        this.injects(this.config.esbuild, this.config.banner, 'banner');
+        this.injects(this.config.esbuild, this.config.footer, 'footer');
+
         if (this.config.watch || this.config.dev || this.config.serve.active) {
             return await context(esbuild);
         }
@@ -549,8 +595,6 @@ export class BuildService {
      */
 
     private async end(result: BuildResult, state: BuildState) {
-        console.log(this.config);
-
         if (result.errors.length > 0) {
             this.handleErrors(result);
             if(!this.config.serve.active && !this.config.dev && !this.config.watch ) {

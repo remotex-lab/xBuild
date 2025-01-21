@@ -25,6 +25,7 @@
 
 process.on('uncaughtException', (error: Error) => {
     console.error(error.stack);
+    process.exit(1);
 });
 
 /**
@@ -54,4 +55,5 @@ process.on('uncaughtException', (error: Error) => {
 
 process.on('unhandledRejection', (reason: Error) => {
     console.error(reason.stack);
+    process.exit(1);
 });

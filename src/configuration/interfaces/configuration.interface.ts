@@ -370,6 +370,12 @@ export interface ConfigurationInterface {
      */
 
     define: Record<string, unknown>;
+
+    /** Documentation: https://esbuild.github.io/api/#banner */
+    banner?: { [type: string]: string | (() => string) }
+
+    /** Documentation: https://esbuild.github.io/api/#footer */
+    footer?: { [type: string]: string | (() => string) }
 }
 
 interface ExportedConfigurationInterface extends ConfigurationInterface {

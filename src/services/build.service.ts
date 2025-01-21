@@ -39,6 +39,7 @@ import { TypeScriptProvider } from '@providers/typescript.provider';
 import { tsConfiguration } from '@providers/configuration.provider';
 import { extractEntryPoints } from '@components/entry-points.component';
 import { packageTypeComponent } from '@components/package-type.component';
+import * as process from 'node:process';
 
 /**
  * Manages the build process for a TypeScript project using esbuild.
@@ -548,8 +549,15 @@ export class BuildService {
      */
 
     private async end(result: BuildResult, state: BuildState) {
+        console.log(this.config);
+
         if (result.errors.length > 0) {
-            return this.handleErrors(result);
+            this.handleErrors(result);
+            if(!this.config.serve.active && !this.config.dev && !this.config.watch ) {
+                process.exit(1);
+            }
+
+            return;
         }
 
         const duration = Date.now() - <number> state.startTime;

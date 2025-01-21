@@ -138,6 +138,9 @@ export async function analyzeDependencies(entryPoint: EntryPoints, platform: Bui
         platform: platform,
         packages: 'external',
         logLevel: 'silent',
-        entryPoints: entryPoint
+        entryPoints: entryPoint,
+        loader: {
+            '.html': 'text'
+        }
     });
 }

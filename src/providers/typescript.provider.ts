@@ -122,7 +122,8 @@ export class TypeScriptProvider {
         const program = createProgram(this.tsConfig.fileNames, {
             ...this.options,
             noEmit: true,
-            skipLibCheck: true
+            skipLibCheck: true,
+            emitDeclarationOnly: true
         });
 
         this.handleDiagnostics(getPreEmitDiagnostics(program), allowError);

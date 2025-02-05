@@ -60,7 +60,7 @@ describe('RemoteX Transpiler', () => {
          * a string of transpiled code and returns the modified code and the base64-encoded source map.
          *
          * Code:
-         * ```typescript
+         * ```ts
          * const dataString = 'console.log("hello world"); //# sourceMappingURL=data:application/json;base64,eyJ2ZX...';
          * const result = extractSourceMap(dataString);
          * ```
@@ -86,7 +86,7 @@ describe('RemoteX Transpiler', () => {
          * does not contain a source map URL.
          *
          * Code:
-         * ```typescript
+         * ```ts
          * const dataString = 'console.log("hello world");';
          * expect(() => extractSourceMap(dataString)).toThrow('Source map URL not found in the output.');
          * ```
@@ -140,7 +140,7 @@ describe('RemoteX Transpiler', () => {
          * using esbuild and extracts the source map from the transpiled output.
          *
          * Code:
-         * ```typescript
+         * ```ts
          * const result = await transpileFile(filePath);
          * ```
          * Expected result: The function returns an object with the transpiled code and extracted source map.

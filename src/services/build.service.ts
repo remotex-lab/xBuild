@@ -72,14 +72,13 @@ export class BuildService {
      * for running development tasks. These processes are used to handle development builds or runtime tasks and are managed
      * by the `BuildService` class to ensure they are properly started and stopped.
      *
-     * @private
-     * @type {Array<ChildProcessWithoutNullStreams>}
-     *
      * @remarks
      * - The array is populated when development processes are spawned, such as when specific development files are
      *   processed or when running in development mode.
      * - The processes are terminated gracefully at the end of the build to avoid leaving orphaned processes running.
      * - It is important to manage these processes correctly to avoid resource leaks and ensure proper cleanup.
+     *
+     * @see ChildProcessWithoutNullStreams
      */
 
     private activePossess: Array<ChildProcessWithoutNullStreams> = [];
@@ -130,11 +129,11 @@ export class BuildService {
      * @returns A promise that resolves with a `BuildResult` when the build process is complete,
      *          or `undefined` if an error occurs during execution.
      *
-     * @throws {Error} Throws an error if the build process encounters issues that are not related
+     * @throws Error Throws an error if the build process encounters issues that are not related
      *                 to TypeScript. Such errors are logged, but the method does not rethrow them.
      *
      * @example
-     * ```typescript
+     * ```ts
      * import { BuildService } from './build-service';
      *
      * const buildService = new BuildService(config);
@@ -179,7 +178,7 @@ export class BuildService {
      * - If any errors occur during the build, they are caught and passed to the `handleErrors` method.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const entryPoints = ['index', 'main'];
      * await this.runDebug(entryPoints);
      * ```
@@ -210,7 +209,7 @@ export class BuildService {
      * `handleErrors` method.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const buildService = new BuildService(config);
      * buildService.serve().then(() => {
      *     console.log('Server is running and watching for changes.');
@@ -339,7 +338,7 @@ export class BuildService {
      *
      * Example:
      * Given the following paths:
-     * ```typescript
+     * ```ts
      * {
      *   '@core/*': ['src/core/*'],
      *   '@utils/*': ['src/utils/*']
@@ -347,15 +346,15 @@ export class BuildService {
      * ```
      * And assuming `rootDir` is set to the base directory of your project, the method
      * will return:
-     * ```typescript
+     * ```ts
      * {
      *   '@core/': './core/',
      *   '@utils/': './utils/'
      * }
      * ```
      *
-     * @param {string} rootDir - The root directory to resolve paths against.
-     * @returns {Record<string, string>} An object mapping cleaned path aliases to their respective resolved paths.
+     * @param rootDir - The root directory to resolve paths against.
+     * @returns An object mapping cleaned path aliases to their respective resolved paths.
      */
 
     private generatePathAlias(rootDir: string): Record<string, string> {
@@ -389,7 +388,7 @@ export class BuildService {
      * - Other errors are logged to the console with their text descriptions.
      *
      * @example
-     * ```typescript
+     * ```ts
      * try {
      *     await buildService.run();
      * } catch (esbuildError) {
@@ -446,7 +445,7 @@ export class BuildService {
      * @returns void - This method does not return any value.
      * It modifies the `esbuild` object directly.
      *
-     * @throws {Error} - If the `object` parameter is not provided, nothing is injected.
+     * @throws Error - If the `object` parameter is not provided, nothing is injected.
      *                   No action will be taken if the specific `name` property (either
      *                   'banner' or 'footer') does not exist in the `esbuild` object.
      */
@@ -535,7 +534,7 @@ export class BuildService {
      * - The `activePossess` array tracks all spawned processes, allowing further management (e.g., termination).
      *
      * @example
-     * ```typescript
+     * ```ts
      * const meta = {
      *   outputs: {
      *     'dist/index.js': { \/* ... *\/ },

@@ -73,7 +73,7 @@ The `xBuild` configuration file allows you to customize various settings for the
 By default, xbuild uses `xbuild.config.ts` (`--config` change it). Here’s how you can configure it:
 
 ### Example Configuration
-```typescript
+```ts
 const config: ConfigurationInterface = {
     declaration: true,
     buildOnError: false,
@@ -97,7 +97,7 @@ const config: ConfigurationInterface = {
 ```
 
 You can also define multiple configurations as an array:
-```typescript
+```ts
 /**
  * Import will remove at compile time
  */
@@ -147,7 +147,7 @@ export default config;
 
 ## Using the ifdef Plugin
 The `ifdef` plugin in `xBuild` allows to conditionally include or exclude code based on defined variables. Here’s an example:
-```typescript
+```ts
 // main.ts
 
 console.log("This code always runs");
@@ -164,7 +164,7 @@ console.log("Feature X is active");
 
 ### Setting Conditions in Configuration
 To enable these blocks during the build, define your conditions in the `xBuild` configuration file:
-```typescript
+```ts
 export default {
     esbuild: {
         entryPoints: ['./src/main.ts'],
@@ -187,7 +187,7 @@ This approach helps to manage feature toggles and debug code efficiently, making
 
 ## Hooks 
 The `hooks` interface provides a structure for lifecycle hooks to customize the build process.
-```typescript
+```ts
 export interface hooks {
     onEnd: OnEndType;
     onLoad: OnLoadType;
@@ -196,7 +196,7 @@ export interface hooks {
 }
 ```
 
-```typescript
+```ts
 /**
  * Imports will be remove at compile time
  */
@@ -248,7 +248,7 @@ export default config;
 ```
 
 ## Using the ifdef and macros
-```typescript
+```ts
 // main.ts
 
 console.log("This code always runs");

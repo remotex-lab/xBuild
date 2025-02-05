@@ -43,7 +43,7 @@ describe('parseConfigurationFile', () => {
      * to simulate the transpilation and execution processes.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const config = await parseConfigurationFile('valid.config.ts');
      * ```
      * Expected result: The `transpileFile` function is called with the correct arguments, and the
@@ -75,7 +75,7 @@ describe('parseConfigurationFile', () => {
      * object unchanged. It verifies that the function correctly returns an empty configuration object.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const config = await parseConfigurationFile('empty.config.ts');
      * ```
      * Expected result: The function returns an empty configuration object `{}`.
@@ -104,7 +104,7 @@ describe('parseConfigurationFile', () => {
      * information to the error. This test checks that the error handling mechanism works as expected.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * await expect(parseConfigurationFile('invalid.config.ts')).rejects.toThrow('Test error');
      * ```
      * Expected result: The error is thrown with source information attached.
@@ -140,7 +140,7 @@ describe('wrapAllFunctions', () => {
      * objects, handling errors and attaching source information as expected.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const config = await parseConfigurationFile('empty.config.ts');
      * ```
      * Expected result: Functions throw errors with the correct messages, and `attachSourceToError`

@@ -33,10 +33,10 @@ import { spawn as process_spawn } from 'child_process';
  * - The function returns a `ChildProcessWithoutNullStreams` object that can be used to interact with the spawned process,
  *   such as handling its termination or sending input.
  *
- * @throws {Error} Throws an error if the Node.js process fails to start or if there are issues with the provided file path.
+ * @throws Error Throws an error if the Node.js process fails to start or if there are issues with the provided file path.
  *
  * @example
- * ```typescript
+ * ```ts
  * import { spawn } from '@services/process.service';
  *
  * // Run without debugging

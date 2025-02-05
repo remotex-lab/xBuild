@@ -93,11 +93,9 @@ function wrapConfigFunctionsWithSourcemap(
  *
  * @throws Will throw an error if the transpilation or execution of the configuration file fails.
  * The thrown error will have sourcemap information attached if available.
- *
- * @async
- *
+
  * @example
- * ```typescript
+ * ```ts
  * const config = await parseConfigurationFile('./config.jet.ts');
  * console.log(config);
  * ```

@@ -124,11 +124,11 @@ export function tsConfiguration(options: BuildOptions): ParsedCommandLine {
  *                    the CLI configurations to merge with the user configurations. Defaults to an empty object.
  * @returns An array of `ConfigurationInterface` objects, each representing a merged configuration.
  *
- * @throws {xBuildError} Throws an error if the `entryPoints` property in the merged configuration is undefined.
+ * @throws xBuildError Throws an error if the `entryPoints` property in the merged configuration is undefined.
  *                       This ensures that the configuration is valid and complete for further processing.
  *
  * @example
- * ```typescript
+ * ```ts
  * import { configuration } from './configuration';
  *
  * const userConfigs = [
@@ -185,18 +185,18 @@ export async function configuration(userConfig: Array<PartialDeepConfigurationsT
  * @param cli - An instance of `Argv<ArgvInterface>` containing CLI arguments and options.
  * @returns A promise that resolves to an array of `ConfigurationInterface` objects, representing
  *          the final merged configuration.
- * @throws {Error} Throws an error if the `entryPoints` property in the final configuration is undefined.
+ * @throws Error Throws an error if the `entryPoints` property in the final configuration is undefined.
  *                 This ensures that the configuration is valid for further processing.
  *
  * @example
- * ```typescript
+ * ```ts
  * import { cliConfiguration } from './cli-configuration';
  *
  * const configFilePath = './config.json';
  * const cliArgs = argv(); // Assuming `argv` is a function that retrieves CLI arguments
  *
  * cliConfiguration(configFilePath, cliArgs).then((finalConfig) => {
- *     console.log('Final configuration:', finalConfig);
+ *     console.log('Final configuration: ', finalConfig);
  * }).catch((error) => {
  *     console.error('Error loading configuration:', error);
  * });

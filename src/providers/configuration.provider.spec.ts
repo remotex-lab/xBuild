@@ -108,7 +108,7 @@ describe('tsConfiguration', () => {
      * parses the configuration correctly and returns the expected result.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const result = tsConfiguration('path/to/tsconfig.json');
      * ```
      * Expected result: The function returns the parsed configuration object as expected, and
@@ -154,7 +154,7 @@ describe('tsConfiguration', () => {
      * The function should throw an error indicating the JSON parsing issue.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const result = tsConfiguration('path/to/invalid-config.json');
      * ```
      * Expected result: The function throws an error with a message indicating the JSON parsing issue.
@@ -188,7 +188,7 @@ describe('tsConfiguration', () => {
      * but contains TypeScript-specific errors that should be handled by the function.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const result = tsConfiguration('path/to/config-with-errors.json');
      * ```
      * Expected result: The function throws an error with a message indicating the TypeScript parsing errors.
@@ -238,7 +238,7 @@ describe('tsConfiguration', () => {
      * The function should throw an error with the same message.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const result = tsConfiguration('path/to/file-read-error.json');
      * ```
      * Expected result: The function throws an error with the same message as the file read error.
@@ -292,7 +292,7 @@ describe('configuration', () => {
      * by merging the default configuration with values from the configuration file and CLI arguments.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const config = await configuration(mockConfigFilePath, mockArgv);
      * ```
      * Expected result: The configuration is correctly merged and returned.
@@ -325,7 +325,7 @@ describe('configuration', () => {
      * and the function should throw an error.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const config = await configuration('nonexistent/file.json', mockArgv);
      * ```
      * Expected result: The function throws an error indicating the file could not be found.

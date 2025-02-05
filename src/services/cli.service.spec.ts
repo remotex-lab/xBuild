@@ -46,7 +46,7 @@ describe('argvParser', () => {
      * as expected. It should also handle the custom help message.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const args = ['node', 'script.js', '--dev', '--outdir', 'build'];
      * const result = argvParser(args);
      * ```
@@ -73,7 +73,7 @@ describe('argvParser', () => {
      * The `argvParser` function should log version information when the `--version` flag is present.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const args = ['node', 'script.js', '--version'];
      * const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
      * argvParser(args);

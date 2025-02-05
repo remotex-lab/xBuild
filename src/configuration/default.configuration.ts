@@ -14,7 +14,7 @@ import { cwd } from 'process';
  * The default configuration options for the build.
  *
  * @example
- * ```typescript
+ * ```ts
  * import { defaultConfiguration } from '@configuration/default-configuration';
  *
  * console.log(defaultConfiguration);

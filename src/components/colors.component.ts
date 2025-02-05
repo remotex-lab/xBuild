@@ -8,11 +8,9 @@
  * The `Reset` option can be used to reset the terminal's text formatting back to the default.
  *
  * @example
- * ```typescript
+ * ```ts
  * console.log(Color.BrightPink, 'This is bright pink text', Color.Reset);
  * ```
- *
- * @enum {string}
  */
 
 export const enum Colors {
@@ -45,17 +43,17 @@ export const enum Colors {
  * @param msg - The message to be formatted with the specified color.
  * @param activeColor - A boolean flag indicating whether color formatting should be applied. Default is `__ACTIVE_COLOR`.
  *
- * @returns {string} A string with the specified color applied to the message,
+ * @returns A string with the specified color applied to the message,
  * followed by a reset sequence if `activeColor` is true.
  *
  * @example
- * ```typescript
+ * ```ts
  * const coloredMessage = setColor(Colors.LightOrange, 'This is a light orange message');
  * console.log(coloredMessage);
  * ```
  *
  * @example
- * ```typescript
+ * ```ts
  * const plainMessage = setColor(Colors.LightOrange, 'This is a light orange message', false);
  * console.log(plainMessage); // Output will be without color formatting
  * ```

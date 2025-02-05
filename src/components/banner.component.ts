@@ -44,23 +44,23 @@ export const cleanScreen = '\x1Bc';
  * the colors are reset after the text is rendered.
  *
  * @example
- * ```typescript
+ * ```ts
  * console.log(bannerComponent());
  * ```
  *
  * This will output the banner to the console with the ASCII logo, version, and colors.
  *
  * @example
- * ```typescript
+ * ```ts
  * console.log(bannerComponent(false));
  * ```
  *
  * This will output the banner to the console with the ASCII logo and version number without color formatting.
  *
- * Todo \r${ activeColor ? cleanScreen : '' }
- *
  * @public
  */
+
+// Todo \r${ activeColor ? cleanScreen : '' }
 
 export function bannerComponent(activeColor: boolean = true): string {
     return `

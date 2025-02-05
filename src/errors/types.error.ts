@@ -7,7 +7,7 @@
  * in your application.
  *
  * @example
- * ```typescript
+ * ```ts
  * throw new TypesError('Invalid type encountered.');
  * ```
  *
@@ -20,7 +20,6 @@ export class TypesError extends Error {
      *
      * @param message - A human-readable message providing details about the error.
      * @param options - Optional configuration for the error, such as a `cause` (ECMAScript 2022+).
-     * @param options.cause
      */
 
     constructor(message?: string, options?: { cause?: Error }) {

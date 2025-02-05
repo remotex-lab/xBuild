@@ -21,7 +21,7 @@ import { xBuildError } from '@errors/xbuild.error';
  * @returns An object where the keys are filenames (without extensions) and the values are the corresponding file paths.
  *
  * @example
- * ```typescript
+ * ```ts
  * const filePaths = ['src/index.ts', 'src/utils.ts'];
  * const result = mapFilePathsToNames(filePaths);
  * console.log(result);
@@ -66,19 +66,19 @@ export function mapFilePathsToNames(filePaths: Array<string>): Record<string, st
  * @throws Will throw an `Error` if the entry points format is unsupported.
  *
  * @example
- * ```typescript
+ * ```ts
  * const entryPoints = extractEntryPoints(['src/index.ts', 'src/utils.ts']);
  * console.log(entryPoints); // { 'index': 'src/index.ts', 'utils': 'src/utils.ts' }
  * ```
  *
  * @example
- * ```typescript
+ * ```ts
  * const entryPoints = extractEntryPoints([{ in: 'src/index.ts', out: 'dist/index.js' }]);
  * console.log(entryPoints); // { 'dist/index.js': 'src/index.ts' }
  * ```
  *
  * @example
- * ```typescript
+ * ```ts
  * const entryPoints = extractEntryPoints({ index: 'src/index.ts', index2: 'dist/index2.js' });
  * console.log(entryPoints); // { index: 'src/index.ts', index2: 'dist/index2.js' }
  * ```

@@ -75,7 +75,7 @@ describe('BaseError', () => {
      * Ensures that the error message and stack are set as expected.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * expect(testError).toBeInstanceOf(TestError);
      * expect(testError.message).toBe('Test error message');
      * expect(testError.stack).toBeDefined();
@@ -95,7 +95,7 @@ describe('BaseError', () => {
      * This test ensures that `TestError` can handle the absence of a source map service gracefully.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const errorWithoutSourceMap = new TestError('Error without source map');
      * expect(errorWithoutSourceMap).toBeInstanceOf(TestError);
      * expect(errorWithoutSourceMap.stack).toBeDefined();

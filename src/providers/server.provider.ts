@@ -29,8 +29,6 @@ import { existsSync, readdir, readFile, readFileSync, stat } from 'fs';
  * - HTML files are represented by a code icon (`fa-file-code`) with a color of `#d1a65f`.
  * - Image files (e.g., PNG, JPG, GIF) share a common image icon (`fa-file-image`) with a color of `#53a8e4`.
  *
- * @constant
- * @type {Record<string, { icon: string, color: string }>}
  */
 
 const fileIcons: Record<string, { icon: string, color: string }> = {
@@ -83,7 +81,7 @@ export class ServerProvider {
      * @param dir - The root directory from which to serve files.
      *
      * @example
-     * ```typescript
+     * ```ts
      * import { ServerProvider } from './server-provider';
      *
      * const serverConfig = {
@@ -112,7 +110,7 @@ export class ServerProvider {
      * If SSL certificates are provided and valid, an HTTPS server is started. Otherwise, an HTTP server is started.
      *
      * @example
-     * ```typescript
+     * ```ts
      * provider.start();
      * ```
      *
@@ -134,7 +132,7 @@ export class ServerProvider {
      * This method creates an HTTP server that listens on the configured port and handles incoming requests.
      *
      * @example
-     * ```typescript
+     * ```ts
      * provider.startHttpServer();
      * ```
      *
@@ -157,7 +155,7 @@ export class ServerProvider {
      * This method creates an HTTPS server with SSL/TLS certificates, listens on the configured port, and handles incoming requests.
      *
      * @example
-     * ```typescript
+     * ```ts
      * provider.startHttpsServer();
      * ```
      *
@@ -190,12 +188,10 @@ export class ServerProvider {
      *
      * @param req - The incoming request object.
      * @param res - The response object.
-     * @param defaultHandler - The default handler function to be called if no custom handler is provided.
-     *
-     * @returns {void}
+     * @param defaultHandler - The default handler functions to be called if no custom handler is provided.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // This method is used internally to handle requests
      * ```
      */
@@ -221,7 +217,7 @@ export class ServerProvider {
      * @returns The MIME type associated with the file extension.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const mimeType = provider.getContentType('html');
      * console.log(mimeType); // 'text/html'
      * ```
@@ -258,7 +254,7 @@ export class ServerProvider {
      * @throws  Throws an error if the file or directory cannot be accessed.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // This method is used internally to handle file and directory responses
      * ```
      */
@@ -301,7 +297,7 @@ export class ServerProvider {
      * @returns A promise that resolves with the file statistics.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const stats = await provider.promisifyStat('./path/to/file');
      * console.log(stats.isFile()); // true or false
      * ```
@@ -322,10 +318,8 @@ export class ServerProvider {
      * @param requestPath - The request path for generating relative links.
      * @param res - The response object.
      *
-     * @returns {void}
-     *
      * @example
-     * ```typescript
+     * ```ts
      * // This method is used internally to handle directory listings
      * ```
      */
@@ -362,10 +356,8 @@ export class ServerProvider {
      * @param fullPath - The full path to the file.
      * @param res - The response object.
      *
-     * @returns {void}
-     *
      * @example
-     * ```typescript
+     * ```ts
      * // This method is used internally to handle file responses
      * ```
      */
@@ -389,10 +381,8 @@ export class ServerProvider {
      *
      * @param res - The response object.
      *
-     * @returns {void}
-     *
      * @example
-     * ```typescript
+     * ```ts
      * provider.sendNotFound(response);
      * ```
      *
@@ -410,10 +400,8 @@ export class ServerProvider {
      * @param res - The response object.
      * @param error - The error object.
      *
-     * @returns {void}
-     *
      * @example
-     * ```typescript
+     * ```ts
      * provider.sendError(response, new Error('Some error'));
      * ```
      *

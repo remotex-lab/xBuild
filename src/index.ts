@@ -84,10 +84,10 @@ export async function buildWithArgv(argv: Array<string>) {
  *
  * @returns A promise that resolves to an array of `BuildResult` objects once all build tasks are completed.
  *
- * @throws {Error} Throws an error if the configuration file does not exist or is invalid.
+ * @throws Error Throws an error if the configuration file does not exist or is invalid.
  *
  * @example
- * ```typescript
+ * ```ts
  * const results = await buildWithPath('./config.ts');
  * console.log('Build results:', results);
  * ```
@@ -115,7 +115,7 @@ export async function buildWithConfigPath(configFilePath: string): Promise<Build
  * @returns A promise that resolves to an array of `BuildResult` objects once all build tasks are completed.
  *
  * @example
- * ```typescript
+ * ```ts
  * const results = await build({ entryPoints: ['./src/index.ts'] });
  * console.log('Build results:', results);
  * ```

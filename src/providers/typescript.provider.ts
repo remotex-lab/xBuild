@@ -49,7 +49,7 @@ import {
  *
  * @class
  * @example
- * ```typescript
+ * ```ts
  * const tsProvider = new TypescriptProvider(parsedConfig, './dist');
  * tsProvider.typeCheck(entryPoints);
  * tsProvider.generateDeclarations(entryPoints);
@@ -77,12 +77,12 @@ export class TypeScriptProvider {
      * Default is `true`.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const tsProvider = new TypescriptProvider(parsedConfig, './dist');
      * ```
      *
      * @example
-     * ```typescript
+     * ```ts
      * const tsProvider = new TypescriptProvider(parsedConfig, './dist', false);
      * // This instance will not apply ANSI color formatting in output messages
      * ```
@@ -112,7 +112,7 @@ export class TypeScriptProvider {
      * The error indicates that the type-checking process has encountered issues.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Type-check files and handle any diagnostics
      * tsProvider.typeCheck(['src/index.ts', 'src/app.ts']);
      * ```
@@ -145,7 +145,7 @@ export class TypeScriptProvider {
      * @returns void
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Generate declaration files for specific entry points
      * tsProvider.generateDeclarations(['src/index.ts', 'src/app.ts']);
      * ```
@@ -180,7 +180,7 @@ export class TypeScriptProvider {
      * @returns `true` if the node is either an `ImportDeclaration` or `ExportDeclaration`; otherwise, `false`.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const isDeclaration = tsProvider.isImportOrExportDeclaration(node);
      * console.log(isDeclaration); // true or false
      * ```
@@ -198,7 +198,7 @@ export class TypeScriptProvider {
      * @returns `true` if the node has a string literal module specifier; otherwise, `undefined`.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const hasModuleSpecifier = tsProvider.hasStringLiteralModuleSpecifier(importNode);
      * console.log(hasModuleSpecifier); // true or undefined
      * ```
@@ -217,7 +217,7 @@ export class TypeScriptProvider {
      * @returns The resolved file path of the module or `undefined` if the module cannot be resolved.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const resolvedPath = tsProvider.resolveModuleFileName('./module', compilerOptions);
      * console.log(resolvedPath); // './dist/module.js'
      * ```
@@ -248,7 +248,7 @@ export class TypeScriptProvider {
      * @returns A relative path from the source file to the target file.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const relativePath = tsProvider.getRelativePathToOutDir('./src/index.ts', './dist/module.js');
      * console.log(relativePath); // './module.js'
      * ```
@@ -282,7 +282,7 @@ export class TypeScriptProvider {
      * @returns The updated `ImportDeclaration` or `ExportDeclaration` node with the new relative module specifier.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const updatedNode = tsProvider.updateModuleSpecifier(importNode, './src/index.ts');
      * console.log(updatedNode.moduleSpecifier.text); // './module.js'
      * ```
@@ -331,7 +331,7 @@ export class TypeScriptProvider {
      * @returns A visitor function that processes the nodes in the source file, updating module specifiers as needed.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const visitor = tsProvider.createVisitor(sourceFile, context);
      * const transformedNode = visitor(importNode);
      * console.log(transformedNode); // ImportDeclaration with updated module specifier
@@ -381,7 +381,7 @@ export class TypeScriptProvider {
      *          implements the `transformSourceFile` and `transformBundle` methods.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const transformerFactory = tsProvider.createTransformerFactory();
      * const emitResult = program.emit(undefined, undefined, undefined, true, {
      *     after: [transformerFactory]
@@ -427,7 +427,7 @@ export class TypeScriptProvider {
      * indicates that type checking has failed.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const diagnostics = program.getSemanticDiagnostics();
      * handleDiagnostics(diagnostics, false); // Throws an error if any diagnostics exist.
      * ```

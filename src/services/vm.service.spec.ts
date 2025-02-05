@@ -95,7 +95,10 @@ describe('sandboxExecute', () => {
      * Test case to check if functions defined in the sandbox can be used in the executed code.
      *
      * Code: `sayHello("World")`
-     * Sandbox functions: `{ sayHello: (name: string) => `Hello, ${ name }!` }`
+     * Sandbox functions:
+     * ``` ts
+     * { sayHello: (name: string) => `Hello, ${ name }!` }
+     * ```
      * Expected result: `'Hello, World!'`
      */
 

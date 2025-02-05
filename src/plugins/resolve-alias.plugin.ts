@@ -14,7 +14,7 @@ import { relative } from 'path';
  *
  * Example:
  * Given the following inputs:
- * ```typescript
+ * ```ts
  * const content = "import { foo } from '@core/foo';";
  * const sourceFile = "/project/src/index.ts";
  * const paths = {
@@ -25,7 +25,7 @@ import { relative } from 'path';
  * ```
  * The function will replace `@core/foo` with a relative path based on the source file's location,
  * potentially resulting in:
- * ```typescript
+ * ```ts
  * const content = "import { foo } from './core/foo';";
  * ```
  *

@@ -20,14 +20,14 @@ describe('ExtractEntryPoints', () => {
      * and use the `out` property as the key in the resulting object.
      *
      * The function is tested with the following entry points:
-     * ```typescript
+     * ```ts
      * const entryPoints = [
      *     { in: 'src/index.ts', out: 'dist/index.js' },
      *     { in: 'src/utils.ts', out: 'dist/utils.js' }
      * ];
      * ```
      * Expected result: The function should return an object mapping the `out` paths to the `in` paths:
-     * ```typescript
+     * ```ts
      * {
      *     'dist/index.js': 'src/index.ts',
      *     'dist/utils.js': 'src/utils.ts'
@@ -52,12 +52,12 @@ describe('ExtractEntryPoints', () => {
      * the file path is the value.
      *
      * The function is tested with the following entry points:
-     * ```typescript
+     * ```ts
      * const entryPoints = ['src/index.ts', 'src/utils.ts'];
      * ```
      * Expected result: The function should return an object mapping filenames (without extension)
      * to the file paths:
-     * ```typescript
+     * ```ts
      * {
      *     'index': 'src/index.ts',
      *     'utils': 'src/utils.ts'
@@ -79,14 +79,14 @@ describe('ExtractEntryPoints', () => {
      * object as the input.
      *
      * The function is tested with the following entry points:
-     * ```typescript
+     * ```ts
      * const entryPoints = {
      *     'index': 'src/index.ts',
      *     'utils': 'src/utils.ts'
      * };
      * ```
      * Expected result: The function should return the input object as is:
-     * ```typescript
+     * ```ts
      * {
      *     'index': 'src/index.ts',
      *     'utils': 'src/utils.ts'
@@ -108,7 +108,7 @@ describe('ExtractEntryPoints', () => {
      * does not match any of the supported types.
      *
      * The function is tested with the following unsupported formats:
-     * ```typescript
+     * ```ts
      * expect(() => extractEntryPoints(123 as any)).toThrow('Unsupported entry points format');
      * expect(() => extractEntryPoints('{}' as any)).toThrow('Unsupported entry points format');
      * expect(() => extractEntryPoints(null as any)).toThrow('Unsupported entry points format');

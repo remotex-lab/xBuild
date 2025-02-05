@@ -23,7 +23,7 @@ import { BaseError } from '@errors/base.error';
  * @param sourceMap - The `SourceService` providing source map data to link the error to its original source.
  *
  * @example
- * ```typescript
+ * ```ts
  * try {
  *    vm.run(someCode);
  * } catch (error) {
@@ -58,7 +58,7 @@ export class VMRuntimeError extends BaseError {
      *                    source code locations. If not provided, this will be `null`.
      *
      * @example
-     * ```typescript
+     * ```ts
      * try {
      *    vm.run(code);
      * } catch (error) {

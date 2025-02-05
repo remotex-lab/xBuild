@@ -1,17 +1,18 @@
-import jsdoc from 'eslint-plugin-jsdoc';
+import tsdoc from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
     ...tseslint.configs.recommended,
-    jsdoc.configs['flat/recommended'],
     {
-        plugins: {
-            jsdoc
+        'plugins': {
+            tsdoc
         },
-        rules: {
+        'rules': {
+            'no-var': 'error',
             'no-undef': 'off',
             'guard-for-in': 'off',
             'no-redeclare': 'off',
+            'tsdoc/syntax': 'error',
             'padded-blocks': 'off',
             'no-unused-vars': 'off',
             'no-invalid-this': 'off',
@@ -22,10 +23,12 @@ export default tseslint.config(
             '@typescript-eslint/no-explicit-any': 'warn',
             '@typescript-eslint/no-invalid-this': 'error',
             "@typescript-eslint/no-dupe-class-members": "error",
-            '@typescript-eslint/consistent-type-imports': ['error', { 'prefer': 'type-imports' }],
-            'comma-dangle': ['error', 'never'],
+            '@typescript-eslint/consistent-type-imports': ['error', {'prefer': 'type-imports'}],
 
-            indent: ['error', 4, {
+            'comma-dangle': ['error', 'never'],
+            '@typescript-eslint/no-namespace': ['error', {'allowDeclarations': true}],
+
+            'indent': ['error', 4, {
                 SwitchCase: 1
             }],
 
@@ -33,30 +36,18 @@ export default tseslint.config(
                 code: 180
             }],
 
-            quotes: ['error', 'single'],
-            semi: ['error', 'always'],
+            'quotes': ['error', 'single'],
+            'semi': ['error', 'always'],
 
-            'jsdoc/tag-lines': [
-                'error',
-                'any',
-                {
-                    startLines: 1
-                }
-            ],
-            'jsdoc/no-types': 'warn',
-            'jsdoc/require-jsdoc': 'off',
-            'jsdoc/require-param-type': 'off',
-            'jsdoc/require-returns-type': 'off',
-            'jsdoc/require-property-type': 'off',
             'linebreak-style': ['error', 'unix'],
             'array-bracket-spacing': ['error', 'always', {
-                objectsInArrays: false,
-                arraysInArrays: false
+                'objectsInArrays': false,
+                'arraysInArrays': false
             }],
 
             'object-curly-spacing': [2, 'always'],
             '@typescript-eslint/member-ordering': ['error', {
-                default: [
+                'default': [
                     // Fields
                     'public-static-field',
                     'public-decorated-field',
@@ -83,16 +74,22 @@ export default tseslint.config(
                     'private-instance-method'
                 ]
             }]
-        }
+        },
     },
     {
-        files: ["**/*.spec.ts"],
-        rules: {
+        'files': ['**/*.spec.ts'],
+        'rules': {
             '@typescript-eslint/no-explicit-any': 'off'
         }
     },
     {
-        ignores: [
+        'files': ['**/*.d.ts', 'src/banner.ts'],
+        'rules': {
+            'no-var': 'off'
+        }
+    },
+    {
+        'ignores': [
             'dist/*',
             '**/*.js',
             'includes/*',

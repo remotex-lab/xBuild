@@ -10,7 +10,7 @@ import type { BaseError } from '@errors/base.error';
  *
  * @type ErrorType
  *
- * @extends {Error}
+ * @extends Error
  *
  * @property callStacks - An optional array of call sites
  *   captured when the error was created. This can provide additional context

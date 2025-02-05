@@ -81,7 +81,7 @@ export class PluginsProvider {
      * @param fn - A function of type `OnStartType` that will be executed when the build process starts.
      *
      * @example
-     * ```typescript
+     * ```ts
      * pluginProvider.registerOnStart(async (build) => {
      *   console.log('Build started:', build);
      * });
@@ -100,7 +100,7 @@ export class PluginsProvider {
      * @param fn - A function of type `OnEndType` that will be executed after the build completes.
      *
      * @example
-     * ```typescript
+     * ```ts
      * pluginProvider.registerOnEnd(async (result) => {
      *   console.log('Build finished:', result);
      * });
@@ -119,7 +119,7 @@ export class PluginsProvider {
      * @param fn - A function of type `OnEndType` that will be executed after the build completes.
      *
      * @example
-     * ```typescript
+     * ```ts
      * pluginProvider.registerOnSuccess(async (result) => {
      *   console.log('Build Success finished:', result);
      * });
@@ -138,7 +138,7 @@ export class PluginsProvider {
      * @param fn - A function of type `OnResolveType` that will be executed during module resolution.
      *
      * @example
-     * ```typescript
+     * ```ts
      * pluginProvider.registerOnResolve(async (args) => {
      *   if (args.path === 'my-module') {
      *     return { path: './src/my-module.ts' };
@@ -160,7 +160,7 @@ export class PluginsProvider {
      * @param fn - A function of type `OnLoadType` that will be executed during module loading.
      *
      * @example
-     * ```typescript
+     * ```ts
      * pluginProvider.registerOnLoad(async (contents, loader, args) => {
      *   if (args.path.endsWith('.json')) {
      *     return { contents: JSON.stringify({ key: 'value' }), loader: 'json' };
@@ -186,7 +186,7 @@ export class PluginsProvider {
      * The configuration includes the plugin name and setup function.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Example usage with esbuild:
      * const esbuild = require('esbuild');
      * const pluginProvider = new PluginsProvider();
@@ -224,7 +224,7 @@ export class PluginsProvider {
      * @returns A promise that resolves when all hooks have been executed.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Registering an onStart hook
      * pluginProvider.registerOnStart(async (build) => {
      *   console.log('Build started:', build);
@@ -264,7 +264,7 @@ export class PluginsProvider {
      * @returns A promise that resolves when all hooks have been executed.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Registering an onEnd hook
      * pluginProvider.registerOnEnd(async (buildResult) => {
      *   console.log('Build completed:', buildResult);
@@ -314,7 +314,7 @@ export class PluginsProvider {
      * @returns A promise that resolves to an `OnResolveResult` containing the resolved path, or `null` if no path is found.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Registering an onResolve hook
      * pluginProvider.registerOnResolve(async (args) => {
      *   if (args.path === 'my-module') {
@@ -352,7 +352,7 @@ export class PluginsProvider {
      * @returns A promise that resolves to an `OnLoadResult` containing the module contents and loader, or `null` if no contents are loaded.
      *
      * @example
-     * ```typescript
+     * ```ts
      * // Registering an onLoad hook
      * pluginProvider.registerOnLoad(async (contents, loader, args) => {
      *   if (args.path.endsWith('.json')) {

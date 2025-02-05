@@ -9,7 +9,7 @@
  *
  * Example usage:
  *
- * ```typescript
+ * ```ts
  * import styles from './template.html';
  *
  * console.log(styles["my-class"]); // Outputs the corresponding class name as a string

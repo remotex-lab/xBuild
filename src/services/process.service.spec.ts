@@ -72,7 +72,7 @@ describe('spawn', () => {
      * The function should call `child_process.spawn` with the correct arguments and return the mocked process object.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const filePath = './path/to/script.js';
      * const processInstance = spawn(filePath);
      * ```
@@ -97,7 +97,7 @@ describe('spawn', () => {
      * The `spawn` function should log output and error messages to the console as expected.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const logSpy = jest.spyOn(console, 'log').mockImplementation();
      * const errorSpy = jest.spyOn(console, 'error').mockImplementation();
      * spawn('./path/to/script.js');
@@ -123,7 +123,7 @@ describe('spawn', () => {
      * The function should return the mocked process object so that it can be used to interact with the spawned process.
      *
      * Code:
-     * ```typescript
+     * ```ts
      * const processInstance = spawn('./path/to/script.js');
      * ```
      * Expected result: The returned process instance matches the mock process object.

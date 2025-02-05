@@ -28,10 +28,10 @@ import { Script, createContext } from 'vm';
  * sandboxed code. If not provided, an empty context is used. The function also supports
  * breaking execution on interrupt signals (e.g., Ctrl+C) with the `breakOnSigint` option.
  *
- * @throws {Error} Throws an error if the code cannot be compiled or executed within the context.
+ * @throws Error Throws an error if the code cannot be compiled or executed within the context.
  *
  * @example
- * ```typescript
+ * ```ts
  * const result = sandboxExecute('return 2 + 2;', { myGlobal: 10 });
  * console.log(result); // Output: 4
  * ```

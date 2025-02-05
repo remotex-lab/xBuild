@@ -224,12 +224,13 @@ export async function parseMacros(
 ): Promise<OnLoadResult | pluginResultType | undefined> {
     if (!args.path.endsWith('.ts') && !args.path.endsWith('.js')) return { loader: loader, contents: content };
     if (!state.macros) {
-        state.macros = {
+        const macros = {
             removeFunctions: new Set<string>()
         };
 
         const meta = await analyzeDependencies([ args.path ]);
-        await collectDeclaredFunctions(meta.metafile, config, state.macros);
+        await collectDeclaredFunctions(meta.metafile, config, macros);
+        state.macros = macros;
     }
 
     const sourceCode = content.toString();

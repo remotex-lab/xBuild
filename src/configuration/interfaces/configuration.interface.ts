@@ -21,7 +21,7 @@ import type { OnEndType, OnLoadType, OnResolveType, OnStartType } from '@provide
  *
  * Example usage:
  *
- * ```typescript
+ * ```ts
  * const entryPoints1: EntryPoints = ['src/index.ts', 'src/utils.ts'];
  * const entryPoints2: EntryPoints = { main: 'src/index.ts', utils: 'src/utils.ts' };
  * const entryPoints3: EntryPoints = [{ in: 'src/index.ts', out: 'dist/index.d.ts' }, { in: 'src/utils.ts', out: 'dist/utils.d.ts' }];
@@ -38,7 +38,7 @@ export type EntryPoints = Array<string> | Record<string, string> | Array<{ in: s
  *
  * **Example Usage:**
  *
- * ```typescript
+ * ```ts
  * interface User {
  *     name: string;
  *     address: {
@@ -104,7 +104,7 @@ export interface ModuleInterface {
      * An object representing the exports of the module.
      * The keys are strings representing export names, and the values can be of any type.
      *
-     * @property {ConfigurationInterface} [default] - An optional default export of type `ConfigurationInterface`.
+     * @property default - An optional default export of type `ConfigurationInterface`.
      */
 
     exports: {
@@ -120,7 +120,7 @@ export interface ModuleInterface {
  * such as the port, host, SSL/TLS certificates, and request handling functions.
  *
  * @example
- * ```typescript
+ * ```ts
  * const serverConfig = {
  *     serve: {
  *         active: true,
@@ -161,17 +161,17 @@ export interface Serve {
  *
  * @interface hooks
  *
- * @property {OnEndType} onEnd - A hook function that is called after the build process completes.
+ * @property onEnd - A hook function that is called after the build process completes.
  *                               This allows for post-processing or cleanup tasks.
- * @property {OnLoadType} onLoad - A hook function that is called when esbuild attempts to load a module.
+ * @property onLoad - A hook function that is called when esbuild attempts to load a module.
  *                                 It can be used to modify the contents of the loaded module.
- * @property {OnStartType} onStart - A hook function that is called before the build process starts.
+ * @property onStart - A hook function that is called before the build process starts.
  *                                    This is useful for initialization tasks or logging.
- * @property {OnResolveType} onResolve - A hook function that is called when esbuild attempts to resolve a module path.
+ * @property onResolve - A hook function that is called when esbuild attempts to resolve a module path.
  *                                        It can be used to customize module resolution behavior.
  *
  * @example
- * ```typescript
+ * ```ts
  * const myHooks: hooks = {
  *     onEnd: async (result) => {
  *         console.log('Build finished:', result);
@@ -191,6 +191,11 @@ export interface Serve {
  *     }
  * };
  * ```
+ *
+ * @see OnEndType
+ * @see OnLoadType
+ * @see OnStartType
+ * @see OnResolveType
  */
 
 export interface hooks {
@@ -208,7 +213,7 @@ export interface hooks {
  * file watching, TypeScript declaration generation, error handling, TypeScript type checking, and esbuild bundler options.
  *
  * @example
- * ```typescript
+ * ```ts
  * const config: ConfigurationInterface = {
  *     dev: true,
  *     watch: true,
@@ -352,7 +357,7 @@ export interface ConfigurationInterface {
      * environment-specific configurations, or any other value that you may want to define at compile time.
      *
      * @example
-     * ```typescript
+     * ```ts
      * const config: ConfigurationInterface = {
      *     dev: true,
      *     define: {
@@ -415,6 +420,7 @@ export type PartialDeepConfigurationsType = PartialDeep<ConfigurationInterface>;
  * support for various build setups.
  *
  * @example
+ * ```ts
  * // A single configuration object
  * const config: ConfigurationsType = {
  *     esbuild: {
@@ -422,6 +428,7 @@ export type PartialDeepConfigurationsType = PartialDeep<ConfigurationInterface>;
  *         outdir: 'dist'
  *     }
  * };
+ * ```
  *
  * @example
  * ```ts

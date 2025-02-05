@@ -124,7 +124,7 @@ export async function transpileFile(filePath: string, buildOptions: BuildOptions
  * @param entryPoint - The entry point(s) to be analyzed.
  * @param platform - The target platform for the build.
  * @returns A `Promise` that resolves to a `BuildResult` object along with a `metafile` containing dependency details.
- * @throws {Error} If the build process fails for any reason.
+ * @throws Error If the build process fails for any reason.
  */
 
 export async function analyzeDependencies(entryPoint: EntryPoints, platform: BuildOptions['platform'] = 'browser'): Promise<

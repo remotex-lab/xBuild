@@ -14,8 +14,10 @@ import { cwd } from 'process';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
+import { SourceService } from '@remotex-labs/xmap';
 import { Colors, setColor } from '@components/colors.component';
-import { SourceService, formatErrorCode, highlightCode } from '@remotex-labs/xmap';
+import { highlightCode } from '@remotex-labs/xmap/highlighter.component';
+import { formatErrorCode } from '@remotex-labs/xmap/formatter.component';
 
 /**
  * Defines

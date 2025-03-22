@@ -14,6 +14,11 @@
 export function parseIfDefConditionals(contents: string, defines: Record<string, unknown>): string {
     return contents.replace(/\/\/\s?ifdef\s?(\w+)([\s\S]*?)\/\/\s?endif/g, (match, condition, code) => {
         // Check if the condition is defined
-        return defines[condition] ? code : '';
+        if (defines[condition]) {
+            return code;
+        } else {
+            // Replace code with equivalent number of empty lines to preserve line numbers
+            return '\n'.repeat((code.match(/\n/g) || []).length);
+        }
     });
 }

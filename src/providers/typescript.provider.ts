@@ -2,42 +2,108 @@
  * Import will remove at compile time
  */
 
-import type {
-    Node,
-    Bundle,
-    Diagnostic,
-    SourceFile,
-    StringLiteral,
-    CompilerOptions,
-    CustomTransformer,
-    ImportDeclaration,
-    ExportDeclaration,
-    ParsedCommandLine,
-    TransformationContext,
-    CustomTransformerFactory
-} from 'typescript';
+import type { NodeWithModifiersType } from '@providers/interfaces/typescript-provider.interface';
 
 /**
  * Imports
  */
 
+import * as ts from 'typescript';
 import { TypesError } from '@errors/types.error';
 import { prefix } from '@components/banner.component';
-import { resolve, relative, dirname, parse } from 'path';
+import { resolve, relative, dirname, parse, join } from 'path';
 import { Colors, setColor } from '@components/colors.component';
-import {
-    sys,
-    factory,
-    createProgram,
-    visitEachChild,
-    isStringLiteral,
-    resolveModuleName,
-    DiagnosticCategory,
-    isImportDeclaration,
-    isExportDeclaration,
-    getPreEmitDiagnostics,
-    flattenDiagnosticMessageText
-} from 'typescript';
+
+/**
+ * A record of updater functions that add export modifiers to different TypeScript node types.
+ * Each function takes a TypeScript node and its existing modifiers, then returns a new node
+ * with the export modifier added at the beginning of the modifier array.
+ *
+ * @param node - The TypeScript node to be updated with export modifiers
+ * @param mods - The existing modifiers of the node, if any
+ * @returns A new TypeScript node with the export modifier added
+ *
+ * @throws TypeError - When provided with an incompatible node type
+ *
+ * @example
+ * ```ts
+ * const classNode = ts.factory.createClassDeclaration(
+ *   undefined, "MyClass", undefined, undefined, []
+ * );
+ * const exportedClassNode = nodeUpdaters.ClassDeclaration(classNode, undefined);
+ * ```
+ *
+ * @see ts.Node
+ * @see ts.Modifier
+ *
+ * @since 1.5.5
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const nodeUpdaters: Record<string, (node: any, mods: ts.Modifier[] | undefined) => ts.Node> = {
+    ClassDeclaration: (n: ts.ClassDeclaration, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateClassDeclaration(
+            n, updatedMods, n.name, n.typeParameters, n.heritageClauses, n.members
+        );
+    },
+
+    InterfaceDeclaration: (n: ts.InterfaceDeclaration, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateInterfaceDeclaration(
+            n, updatedMods, n.name, n.typeParameters, n.heritageClauses, n.members
+        );
+    },
+
+    EnumDeclaration: (n: ts.EnumDeclaration, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateEnumDeclaration(
+            n, updatedMods, n.name, n.members
+        );
+    },
+
+    FunctionDeclaration: (n: ts.FunctionDeclaration, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateFunctionDeclaration(
+            n, updatedMods, n.asteriskToken, n.name, n.typeParameters, n.parameters, n.type, n.body
+        );
+    },
+
+    TypeAliasDeclaration: (n: ts.TypeAliasDeclaration, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateTypeAliasDeclaration(
+            n, updatedMods, n.name, n.typeParameters, n.type
+        );
+    },
+
+    VariableStatement: (n: ts.VariableStatement, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateVariableStatement(
+            n, updatedMods, n.declarationList
+        );
+    },
+
+    ModuleDeclaration: (n: ts.ModuleDeclaration, mods) => {
+        const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+
+        return ts.factory.updateModuleDeclaration(
+            n, updatedMods, n.name, n.body
+        );
+    }
+};
 
 /**
  * Provides TypeScript-related utilities such as type-checking, generating declaration files,
@@ -62,7 +128,7 @@ export class TypeScriptProvider {
      * Compiler options for configuring TypeScript compilation.
      */
 
-    readonly options: CompilerOptions;
+    readonly options: ts.CompilerOptions;
 
     /**
      * Creates an instance of `TypescriptProvider` with the given TypeScript configuration and output directory.
@@ -88,7 +154,7 @@ export class TypeScriptProvider {
      * ```
      */
 
-    constructor(public tsConfig: ParsedCommandLine, private outDir: string, private activeColor: boolean = true) {
+    constructor(public tsConfig: ts.ParsedCommandLine, private outDir: string, private activeColor: boolean = true) {
         this.options = {
             ...this.tsConfig.options,
             outDir: this.outDir
@@ -103,7 +169,7 @@ export class TypeScriptProvider {
      * any issues found during the type-checking process.
      *
      * @param allowError - A boolean flag indicating whether to throw an error if diagnostics are present. If set to
-     * `true`, errors are logged but not thrown, allowing the process to continue. Defaults to `false`, which throws
+     * `true`, errors are logged but not thrown, allowing the process to continue. Default to `false`, which throws
      * an error if diagnostics are encountered.
      *
      * @returns void
@@ -119,14 +185,84 @@ export class TypeScriptProvider {
      */
 
     typeCheck(allowError: boolean = false): void {
-        const program = createProgram(this.tsConfig.fileNames, {
+        const program = ts.createProgram(this.tsConfig.fileNames, {
             ...this.options,
             noEmit: true,
             skipLibCheck: true,
             emitDeclarationOnly: true
         });
 
-        this.handleDiagnostics(getPreEmitDiagnostics(program), allowError);
+        this.handleDiagnostics(ts.getPreEmitDiagnostics(program), allowError);
+    }
+
+    /**
+     * Generates declaration files (.d.ts) for bundle entry points.
+     *
+     * @param entryPoints - Map of output declaration file paths to their corresponding input source files
+     * @param noTypeChecker - When true, skips type checking during generation (default: false)
+     * @param allowError - When true, continues generation even if type errors are found (default: false)
+     *
+     * @throws Error - If type errors are found and allowError is false
+     *
+     * @remarks
+     * This method creates TypeScript declaration files for each entry point specified in the record.
+     * For each entry point:
+     *
+     * 1. Create a TypeScript program with input file
+     * 2. Configure the program to emit declaration files only
+     * 3. Applies custom transformers to clean up declarations
+     * 4. Performs type checking (unless disabled)
+     * 5. Emits the declaration file to the specified output path
+     *
+     * The generated declarations are processed by the cleanupDeclarations transformer,
+     * which removes export modifiers and performs another necessary cleanup.
+     *
+     * Type errors will normally cause the process to fail unless allowError is set to true.
+     *
+     * @example
+     * ```ts
+     * // Generate declarations for multiple entry points
+     * generator.generateBundleDeclarations({
+     *   './dist/index.d.ts': './src/index.ts',
+     *   './dist/core.d.ts': './src/core.ts'
+     * });
+     * ```
+     *
+     * @since 1.5.5
+     */
+
+
+    generateBundleDeclarations(entryPoints: Record<string, string>, noTypeChecker = false, allowError: boolean = false): void {
+        const config = {
+            ...this.options,
+            rootDir: this.options.baseUrl,
+            declaration: true,
+            skipLibCheck: true,
+            emitDeclarationOnly: true
+        };
+
+        Object.entries(entryPoints).forEach(([ output, input ]) => {
+            config.outFile = join(this.outDir, output);
+            const program = ts.createProgram([ input ], config);
+
+            const customTransformers: ts.CustomTransformers = {
+                afterDeclarations: [ this.cleanupDeclarations() ]
+            };
+
+            // Collect diagnostics and check for errors
+            const diagnostics = ts.getPreEmitDiagnostics(program);
+            if (!noTypeChecker && diagnostics.some(diagnostic => diagnostic.category === ts.DiagnosticCategory.Error)) {
+                this.handleDiagnostics(diagnostics, allowError);
+            }
+
+            program.emit(
+                undefined, // no specific sourceFile
+                undefined, // no specific writeFile
+                undefined, // no cancellationToken
+                undefined, // emitOnlyDtsFiles is not used when emitDeclarationOnly is true
+                customTransformers
+            );
+        });
     }
 
     /**
@@ -139,7 +275,7 @@ export class TypeScriptProvider {
      *
      * @param noTypeChecker - Skips TypeScript type checking.
      * @param allowError - A boolean flag indicating whether to throw an error if diagnostics are present. If set to
-     * `true`, errors are logged but not thrown, allowing the process to continue. Defaults to `false`, which throws
+     * `true`, errors are logged but not thrown, allowing the process to continue. Default to `false`, which throws
      * an error if diagnostics are encountered.
      *
      * @returns void
@@ -152,7 +288,7 @@ export class TypeScriptProvider {
      */
 
     generateDeclarations(noTypeChecker = false, allowError: boolean = false): void {
-        const program = createProgram(this.tsConfig.fileNames, {
+        const program = ts.createProgram(this.tsConfig.fileNames, {
             ...this.options,
             rootDir: this.options.baseUrl,
             declaration: true,
@@ -161,8 +297,8 @@ export class TypeScriptProvider {
         });
 
         // Collect diagnostics and check for errors
-        const diagnostics = getPreEmitDiagnostics(program);
-        if (!noTypeChecker && diagnostics.some(diagnostic => diagnostic.category === DiagnosticCategory.Error)) {
+        const diagnostics = ts.getPreEmitDiagnostics(program);
+        if (!noTypeChecker && diagnostics.some(diagnostic => diagnostic.category === ts.DiagnosticCategory.Error)) {
             this.handleDiagnostics(diagnostics, allowError);
         }
 
@@ -186,8 +322,8 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private isImportOrExportDeclaration(node: Node): boolean {
-        return isImportDeclaration(node) || isExportDeclaration(node);
+    private isImportOrExportDeclaration(node: ts.Node): boolean {
+        return ts.isImportDeclaration(node) || ts.isExportDeclaration(node);
     }
 
     /**
@@ -204,8 +340,8 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private hasStringLiteralModuleSpecifier(node: Node): boolean | undefined {
-        return (<ImportDeclaration> node).moduleSpecifier && isStringLiteral((<ImportDeclaration> node).moduleSpecifier);
+    private hasStringLiteralModuleSpecifier(node: ts.Node): boolean | undefined {
+        return (<ts.ImportDeclaration> node).moduleSpecifier && ts.isStringLiteral((<ts.ImportDeclaration> node).moduleSpecifier);
     }
 
     /**
@@ -223,9 +359,9 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private resolveModuleFileName(specifierText: string, options: CompilerOptions): string | undefined {
+    private resolveModuleFileName(specifierText: string, options: ts.CompilerOptions): string | undefined {
         let path = undefined;
-        const resolvedModule = resolveModuleName(specifierText, options.baseUrl!, options, sys);
+        const resolvedModule = ts.resolveModuleName(specifierText, options.baseUrl!, options, ts.sys);
 
         if (resolvedModule.resolvedModule && options.baseUrl) {
             if (resolvedModule.resolvedModule.resolvedFileName.includes('node_modules'))
@@ -288,19 +424,19 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private updateModuleSpecifier(node: Node, sourceFile: string): Node {
-        const newModuleSpecifier = factory.createStringLiteral(sourceFile);
+    private updateModuleSpecifier(node: ts.Node, sourceFile: string): ts.Node {
+        const newModuleSpecifier = ts.factory.createStringLiteral(sourceFile);
 
-        if (isImportDeclaration(node)) {
-            return factory.updateImportDeclaration(
+        if (ts.isImportDeclaration(node)) {
+            return ts.factory.updateImportDeclaration(
                 node,
                 node.modifiers,
                 node.importClause,
                 newModuleSpecifier,
                 undefined
             );
-        } else if (isExportDeclaration(node)) {
-            return factory.updateExportDeclaration(
+        } else if (ts.isExportDeclaration(node)) {
+            return ts.factory.updateExportDeclaration(
                 node,
                 node.modifiers,
                 node.isTypeOnly,
@@ -338,23 +474,23 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private createVisitor(sourceFile: SourceFile, context: TransformationContext): (node: Node) => Node {
+    private createVisitor(sourceFile: ts.SourceFile, context: ts.TransformationContext): (node: ts.Node) => ts.Node {
         // Define the visitor function that will handle transformations
-        const visitNode = (node: Node | ImportDeclaration | ExportDeclaration): Node => {
+        const visitNode = (node: ts.Node | ts.ImportDeclaration | ts.ExportDeclaration): ts.Node => {
             // Example transformation: replace import/export module specifiers with relative paths
             if (this.isImportOrExportDeclaration(node) && this.hasStringLiteralModuleSpecifier(node)) {
-                const specifierText = ((<ImportDeclaration> node).moduleSpecifier as StringLiteral).text;
+                const specifierText = ((<ts.ImportDeclaration> node).moduleSpecifier as ts.StringLiteral).text;
                 const resolvedTargetFile = this.resolveModuleFileName(specifierText, this.options);
 
                 if (resolvedTargetFile) {
                     const relativePath = this.getRelativePathToOutDir(sourceFile.fileName, resolvedTargetFile);
 
-                    return this.updateModuleSpecifier(node as Node & { moduleSpecifier: StringLiteral }, relativePath);
+                    return this.updateModuleSpecifier(node as ts.Node & { moduleSpecifier: ts.StringLiteral }, relativePath);
                 }
             }
 
             // Recursively visit each child node
-            return visitEachChild(node, visitNode, context);
+            return ts.visitEachChild(node, visitNode, context);
         };
 
         // Return the visitor function
@@ -389,16 +525,16 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private createTransformerFactory(): CustomTransformerFactory {
-        return (context: TransformationContext): CustomTransformer => {
+    private createTransformerFactory(): ts.CustomTransformerFactory {
+        return (context: ts.TransformationContext): ts.CustomTransformer => {
             return {
                 // Transform the source file by visiting all nodes
-                transformSourceFile: (sourceFile: SourceFile): SourceFile => {
-                    return visitEachChild(sourceFile, this.createVisitor(sourceFile, context), context);
+                transformSourceFile: (sourceFile: ts.SourceFile): ts.SourceFile => {
+                    return ts.visitEachChild(sourceFile, this.createVisitor(sourceFile, context), context);
                 },
 
                 // Required for transformers but usually not necessary for us to implement
-                transformBundle: (bundle: Bundle): Bundle => {
+                transformBundle: (bundle: ts.Bundle): ts.Bundle => {
                     return bundle; // No transformation needed for bundles in this case
                 }
             };
@@ -433,14 +569,14 @@ export class TypeScriptProvider {
      * ```
      */
 
-    private handleDiagnostics(diagnostics: readonly Diagnostic[], allowError: boolean = false): void {
+    private handleDiagnostics(diagnostics: readonly ts.Diagnostic[], allowError: boolean = false): void {
         if (diagnostics.length === 0)
             return;
 
         diagnostics.forEach(diagnostic => {
             if (diagnostic.file && diagnostic.start !== undefined) {
                 const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-                const message = flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+                const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
 
                 const file = setColor(Colors.Cyan, diagnostic.file.fileName, this.activeColor);
                 const position = setColor(Colors.LightYellow, `${ line + 1 }:${ character + 1 }`, this.activeColor);
@@ -449,7 +585,7 @@ export class TypeScriptProvider {
 
                 console.error(`${ prefix() } ${ file }:${ position } - ${ errorMsg } ${ errorCode }:${ message }`);
             } else {
-                console.error(flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
+                console.error(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
             }
         });
 
@@ -457,5 +593,361 @@ export class TypeScriptProvider {
         if (!allowError) {
             throw new TypesError('Type checking failed due to errors.');
         }
+    }
+
+    /**
+     * Type guard to check if a node is one that can have modifiers.
+     *
+     * @param node - The TypeScript node to check
+     * @returns True if the node is a type that can have modifiers, false otherwise
+     *
+     * @remarks
+     * This type guard function identifies node types that can potentially have
+     * modifiers like 'export', 'default', etc. It's used in the AST transformation
+     * process to identify nodes where export modifiers need to be removed.
+     *
+     * The supported node types include:
+     * - Class declarations
+     * - Interface declarations
+     * - Enum declarations
+     * - Function declarations
+     * - Type alias declarations
+     * - Variable statements
+     * - Module declarations
+     *
+     * @see NodeWithModifiersType
+     * @see ts.Node
+     *
+     * @since 1.5.5
+     */
+
+    private isNodeWithModifiers(node: ts.Node): node is NodeWithModifiersType {
+        return (
+            ts.isClassDeclaration(node) ||
+            ts.isInterfaceDeclaration(node) ||
+            ts.isEnumDeclaration(node) ||
+            ts.isFunctionDeclaration(node) ||
+            ts.isTypeAliasDeclaration(node) ||
+            ts.isVariableStatement(node) ||
+            ts.isModuleDeclaration(node)
+        );
+    }
+
+    /**
+     * Filters out export and default modifiers from an array of TypeScript modifiers.
+     *
+     * @param modifiers - Optional array of TypeScript modifiers to process
+     * @returns A new array without export/default modifiers, or undefined if no modifiers remain
+     *
+     * @remarks
+     * This helper method is used when transforming nodes to remove export-related functionality.
+     * It returns undefined instead of an empty array when no modifiers remain to ensure
+     * proper TypeScript AST structure.
+     *
+     * @example
+     * ```ts
+     * // Input: [export, const]
+     * // Output: [const]
+     *
+     * // Input: [export]
+     * // Output: undefined
+     * ```
+     *
+     * @see ts.Modifier
+     * @see ts.SyntaxKind.ExportKeyword
+     * @see ts.SyntaxKind.DefaultKeyword
+     *
+     * @since 1.5.5
+     */
+
+    private removeExportModifiers(modifiers?: readonly ts.Modifier[]): ts.Modifier[] | undefined {
+        if (!modifiers) return undefined;
+
+        const newModifiers = modifiers.filter(
+            m => m.kind !== ts.SyntaxKind.ExportKeyword && m.kind !== ts.SyntaxKind.DefaultKeyword
+        );
+
+        return newModifiers.length ? newModifiers : undefined;
+    }
+
+    /**
+     * Updates a node by removing its export modifiers.
+     *
+     * @param node - A TypeScript node that can have modifiers
+     * @returns A new node with export and default modifiers removed
+     *
+     * @remarks
+     * This method dynamically determines the node type and applies the appropriate
+     * update function from the nodeUpdaters record.
+     *
+     * It works by:
+     * 1. First, removing export modifiers using removeExportModifiers method
+     * 2. Identifying the node type by matching it against TypeScript's type guards
+     * 3. Applying the corresponding updater function from nodeUpdaters
+     * 4. Falling back to returning the original node if no updater is found
+     *
+     * The dynamic approach avoids repetitive code for each node type while still
+     * maintaining type safety through TypeScript's built-in type guards.
+     *
+     * @see nodeUpdaters
+     * @see removeExportModifiers
+     * @see NodeWithModifiersType
+     *
+     * @since 1.5.5
+     */
+
+    private updateNodeWithoutExports(node: NodeWithModifiersType): ts.Node {
+        const newModifiers = this.removeExportModifiers(<readonly ts.Modifier[] | undefined> node.modifiers);
+
+        // Get the node kind name without the "is" prefix
+        for (const [ nodeType, updater ] of Object.entries(nodeUpdaters)) {
+            const typeGuardFn = <(node: ts.Node) => boolean> ts[`is${nodeType}` as keyof typeof ts];
+            if (typeof typeGuardFn === 'function' && typeGuardFn(node)) {
+                return updater(node, newModifiers);
+            }
+        }
+
+        // Fallback for any other node types
+        return node;
+    }
+
+    /**
+     * Recursively visits and transforms nodes in the TypeScript AST.
+     *
+     * @param context - The transformation context provided by TypeScript
+     * @param node - The current node being visited
+     * @returns A transformed node with export modifiers removed where applicable
+     *
+     * @remarks
+     * This method is the core of the AST transformation process.
+     *
+     * It:
+     * 1. Checks if the current node is one that can have modifiers
+     * 2. If so, checks if it has any export or default modifiers
+     * 3. If export modifiers are found, remove them using updateNodeWithoutExports
+     * 4. Recursively visit all child nodes regardless of whether the current node was modified
+     *
+     * The recursion ensures that all nodes in the entire syntax tree are processed,
+     * resulting in a complete transformation that removes all export modifiers.
+     *
+     * @see isNodeWithModifiers
+     * @see updateNodeWithoutExports
+     * @see ts.visitEachChild
+     *
+     * @since 1.5.5
+     */
+
+    private visitNode(context: ts.TransformationContext, node: ts.Node): ts.Node {
+        // Remove export modifiers from declarations
+        if (this.isNodeWithModifiers(node) && node.modifiers) {
+            const hasExportModifiers = node.modifiers.some(
+                m => m.kind === ts.SyntaxKind.ExportKeyword || m.kind === ts.SyntaxKind.DefaultKeyword
+            );
+
+            if (hasExportModifiers) {
+                return this.updateNodeWithoutExports(node);
+            }
+        }
+
+        // Visit each child node
+        return ts.visitEachChild(
+            node,
+            childNode => this.visitNode(context, childNode),
+            context
+        );
+    }
+
+    /**
+     * Checks if any string in an array contains the specified substring.
+     *
+     * @param array - The array of strings to search within
+     * @param substring - The substring to search for
+     * @returns True if any string in the array contains the substring, false otherwise
+     *
+     * @example
+     * ```ts
+     * const fileNames = ['src/main.ts', 'src/utils/helpers.ts'];
+     * const result = arrayContainsStringWithSubstring(fileNames, 'utils/helpers.ts');
+     * // a result would be true
+     * ```
+     *
+     * @since 1.5.5
+     */
+
+    private arrayContainsStringWithSubstring(array: string[], substring: string): boolean {
+        return array.some(str => str.includes(substring));
+    }
+
+    /**
+     * Processes a top-level TypeScript statement to handle imports, exports, and module declarations.
+     * This method implements the core transformation logic for each statement in a source file.
+     *
+     * @param node - The TypeScript statement to process
+     * @param externalImports - Array to collect external import declarations
+     * @param context - The transformation context provided by TypeScript
+     * @returns An array of transformed statements (maybe empty if the statement is removed)
+     *
+     * @remarks
+     * The method performs the following operations:
+     * - Collects external imports and removes internal ones
+     * - Removes import equals declarations
+     * - Removes export declarations
+     * - Unrests contents from module declarations with the "declare" keyword
+     * - Processes other statements using the visitNode method
+     *
+     * @see ts.Statement
+     * @see ts.ImportDeclaration
+     * @see ts.ModuleDeclaration
+     *
+     * @since 1.5.5
+     */
+
+
+    private visitTopLevelStatement(
+        node: ts.Statement, externalImports: ts.ImportDeclaration[], context: ts.TransformationContext
+    ): ts.Statement[] {
+        // Handle imports: collect external ones, remove internal ones
+        if (ts.isImportDeclaration(node)) {
+            if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+                const moduleSpecifier = node.moduleSpecifier.text;
+
+                if (!this.arrayContainsStringWithSubstring(this.tsConfig.fileNames, `${moduleSpecifier}.ts`)) {
+                    // Create a new import for external modules
+                    const newImport = ts.factory.createImportDeclaration(
+                        node.modifiers,
+                        node.importClause,
+                        ts.factory.createStringLiteral(moduleSpecifier)
+                    );
+
+                    externalImports.push(newImport);
+                }
+            }
+
+            return [];
+        }
+
+        // Remove import equals declarations
+        if (ts.isImportEqualsDeclaration(node)) {
+            return [];
+        }
+
+        // Remove export declarations entirely
+        if (ts.isExportDeclaration(node)) {
+            return [];
+        }
+
+        // Handle module declarations (unnest the contents)
+        if (ts.isModuleDeclaration(node)) {
+            // If this is a "declare module" statement
+            if (node.modifiers?.some(m => m.kind === ts.SyntaxKind.DeclareKeyword)) {
+                // Extract the statements from inside the module
+                if (node.body && ts.isModuleBlock(node.body)) {
+                    return node.body.statements.flatMap(stmt =>
+                        this.visitTopLevelStatement(stmt, externalImports, context)
+                    );
+                }
+
+                return [];
+            }
+
+            return [ this.visitNode(context, node) as ts.Statement ];
+        }
+
+        // Handle any other type of statement
+        return [ this.visitNode(context, node) as ts.Statement ];
+    }
+
+    /**
+     * Processes a TypeScript source file to extract external imports and transform statements.
+     * This method visits each top-level statement in the source file, collecting external imports
+     * and applying transformations as needed.
+     *
+     * @param sourceFile - The TypeScript source file to process
+     * @param externalImports - Array to collect external import declarations
+     * @param context - The transformation context provided by TypeScript
+     * @returns A transformed TypeScript source file
+     *
+     * @remarks
+     * This method maintains all the original source file metadata (like referenced files,
+     * type reference directives, etc.) while updating the statement array with
+     * processed statements.
+     *
+     * @see ts.SourceFile
+     * @see ts.ImportDeclaration
+     * @see ts.TransformationContext
+     *
+     * @since 1.5.5
+     */
+
+    private visitSourceFile(
+        sourceFile: ts.SourceFile,
+        externalImports: ts.ImportDeclaration[],
+        context: ts.TransformationContext
+    ): ts.SourceFile {
+        const statements = sourceFile.statements.flatMap(stmt =>
+            this.visitTopLevelStatement(stmt, externalImports, context)
+        );
+
+        return ts.factory.updateSourceFile(
+            sourceFile,
+            statements,
+            sourceFile.isDeclarationFile,
+            sourceFile.referencedFiles,
+            sourceFile.typeReferenceDirectives,
+            sourceFile.hasNoDefaultLib,
+            sourceFile.libReferenceDirectives
+        );
+    }
+
+    /**
+     * Creates a transformer factory that cleans up declarations in TypeScript bundles.
+     * This transformer extracts external imports from each source file in the bundle
+     * and consolidates them into a single imports file at the beginning of the bundle.
+     *
+     * @returns A transformer factory function that transforms TypeScript bundles
+     *
+     * @throws Error - When the input is not a bundle but a single source file
+     *
+     * @remarks
+     * The transformer processes each source file in the bundle, extracts external imports,
+     * and creates a new bundle with all imports consolidated at the beginning.
+     *
+     * @example
+     * ```ts
+     * const transformer = myClass.cleanupDeclarations();
+     * const result = ts.transform(bundle, [transformer]);
+     * ```
+     *
+     * @see ts.TransformerFactory
+     * @see ts.Bundle
+     *
+     * @since 1.5.5
+     */
+
+    private cleanupDeclarations(): ts.TransformerFactory<ts.SourceFile | ts.Bundle> {
+        return (context) => {
+            return (sourceFile) => {
+                // Validate input is a bundle
+                if (!ts.isBundle(sourceFile)) {
+                    throw new Error('Cannot process a single file, expected a bundle');
+                }
+
+                const externalImports: ts.ImportDeclaration[] = [];
+
+                // Process each source file
+                const newSourceFiles = sourceFile.sourceFiles.map(file =>
+                    this.visitSourceFile(file, externalImports, context)
+                );
+
+                // Create a source file containing just the external imports
+                const importsFile = ts.factory.createSourceFile(
+                    externalImports,
+                    ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+                    ts.NodeFlags.None
+                );
+
+                return ts.factory.createBundle([ importsFile, ...newSourceFiles ]);
+            };
+        };
     }
 }

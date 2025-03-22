@@ -151,39 +151,57 @@ export async function collectDeclaredFunctions(meta: Metafile, config: Configura
  */
 
 function transformSourceCode(sourceFile: ts.SourceFile, state: BuildStateInterface['macros']): string {
-    function transformer(context: ts.TransformationContext) {
-        const visit: ts.Visitor<ts.Node, ts.Node> = (node) => {
-            if (ts.isCallExpression(node)) {
-                const text = node.expression.getText();
-                const functionName = text.endsWith('!') ? text.slice(0, -1) : text;
+    // Track the ranges of nodes that need to be replaced
+    const replacements: Array<{ start: number; end: number; replacement: string }> = [];
 
-                if (functionName.startsWith('$$') && state.removeFunctions.has(functionName)) {
-                    return ts.factory.createIdentifier('undefined');
-                }
+    // Visitor function to identify nodes to replace
+    function visit(node: ts.Node): void {
+        if (ts.isCallExpression(node)) {
+            const text = node.expression.getText();
+            const functionName = text.endsWith('!') ? text.slice(0, -1) : text;
 
-                // Check if the left-hand side is a PropertyAccessExpression (i.e., object.$$methodName())
-                const expression = node.expression;
-                if (ts.isPropertyAccessExpression(expression)) {
-                    const methodName = expression.name;
-
-                    // Ensure it's an identifier and check if the method name starts with '$$'
-                    if (ts.isIdentifier(methodName) && methodName.text.startsWith('$$')) {
-                        // Mark this method for removal or take any other action
-                        return ts.factory.createIdentifier('undefined');
-                    }
-                }
+            if (functionName.startsWith('$$') && state.removeFunctions.has(functionName)) {
+                replacements.push({
+                    start: node.getStart(),
+                    end: node.getEnd(),
+                    replacement: 'undefined'
+                });
             }
 
-            return ts.visitEachChild(node, visit, context);
-        };
+            // Check for object.$$methodName() pattern
+            const expression = node.expression;
+            if (ts.isPropertyAccessExpression(expression)) {
+                const methodName = expression.name;
 
-        return (node: ts.Node) => ts.visitNode<ts.Node, ts.Node>(node, visit);
+                if (ts.isIdentifier(methodName) && methodName.text.startsWith('$$')) {
+                    replacements.push({
+                        start: node.getStart(),
+                        end: node.getEnd(),
+                        replacement: 'undefined'
+                    });
+                }
+            }
+        }
+
+        // Continue traversing the AST
+        ts.forEachChild(node, visit);
     }
 
-    const result = ts.transform(sourceFile, [ transformer ]);
-    const printer = ts.createPrinter();
+    // Traverse the AST to collect replacements
+    visit(sourceFile);
 
-    return printer.printFile(result.transformed[0] as ts.SourceFile);
+    // Sort replacements in reverse order to avoid position shifts
+    replacements.sort((a, b) => b.start - a.start);
+
+    // Apply replacements directly to the source text
+    let result = sourceFile.getFullText();
+
+    for (const { start, end, replacement } of replacements) {
+        // Get the actual full text positions including trivia
+        result = result.substring(0, start) + replacement + result.substring(end);
+    }
+
+    return result;
 }
 
 /**

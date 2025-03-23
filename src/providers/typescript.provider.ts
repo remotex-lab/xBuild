@@ -43,7 +43,8 @@ import { Colors, setColor } from '@components/colors.component';
 const nodeUpdaters: Record<string, (node: any, mods: ts.Modifier[] | undefined) => ts.Node> = {
     ClassDeclaration: (n: ts.ClassDeclaration, mods) => {
         const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
-        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+        const declareModifier = ts.factory.createModifier(ts.SyntaxKind.DeclareKeyword);
+        const updatedMods = mods ? [ exportModifier, declareModifier, ...mods ] : [ exportModifier, declareModifier ];
 
         return ts.factory.updateClassDeclaration(
             n, updatedMods, n.name, n.typeParameters, n.heritageClauses, n.members
@@ -61,7 +62,8 @@ const nodeUpdaters: Record<string, (node: any, mods: ts.Modifier[] | undefined) 
 
     EnumDeclaration: (n: ts.EnumDeclaration, mods) => {
         const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
-        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+        const declareModifier = ts.factory.createModifier(ts.SyntaxKind.DeclareKeyword);
+        const updatedMods = mods ? [ exportModifier, declareModifier, ...mods ] : [ exportModifier, declareModifier ];
 
         return ts.factory.updateEnumDeclaration(
             n, updatedMods, n.name, n.members
@@ -70,7 +72,8 @@ const nodeUpdaters: Record<string, (node: any, mods: ts.Modifier[] | undefined) 
 
     FunctionDeclaration: (n: ts.FunctionDeclaration, mods) => {
         const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
-        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+        const declareModifier = ts.factory.createModifier(ts.SyntaxKind.DeclareKeyword);
+        const updatedMods = mods ? [ exportModifier, declareModifier, ...mods ] : [ exportModifier, declareModifier ];
 
         return ts.factory.updateFunctionDeclaration(
             n, updatedMods, n.asteriskToken, n.name, n.typeParameters, n.parameters, n.type, n.body
@@ -88,7 +91,8 @@ const nodeUpdaters: Record<string, (node: any, mods: ts.Modifier[] | undefined) 
 
     VariableStatement: (n: ts.VariableStatement, mods) => {
         const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
-        const updatedMods = mods ? [ exportModifier, ...mods ] : [ exportModifier ];
+        const declareModifier = ts.factory.createModifier(ts.SyntaxKind.DeclareKeyword);
+        const updatedMods = mods ? [ exportModifier, declareModifier, ...mods ] : [ exportModifier, declareModifier ];
 
         return ts.factory.updateVariableStatement(
             n, updatedMods, n.declarationList

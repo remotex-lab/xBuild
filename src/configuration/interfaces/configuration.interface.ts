@@ -301,6 +301,12 @@ export interface ConfigurationInterface {
     declaration: boolean;
 
     /**
+     * Bundle declaration file
+     */
+
+    bundleDeclaration: boolean;
+
+    /**
      * Overrides the output directory for TypeScript declaration files (.d.ts).
      *
      * If this option is not set, the output directory specified in the `outDir`

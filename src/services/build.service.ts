@@ -573,7 +573,11 @@ export class BuildService {
             state.startTime = Date.now();
             console.log(`${ prefix() } StartBuild ${ build.initialOptions.outdir }`);
 
-            if (this.config.declaration)
+            if(this.config.bundleDeclaration)
+                this.typeScriptProvider.generateBundleDeclarations(
+                    extractEntryPoints(this.config.esbuild.entryPoints), this.config.noTypeChecker, this.config.buildOnError
+                );
+            else if (this.config.declaration)
                 this.typeScriptProvider.generateDeclarations(this.config.noTypeChecker, this.config.buildOnError);
             else if (!this.config.noTypeChecker)
                 this.typeScriptProvider.typeCheck(this.config.buildOnError);

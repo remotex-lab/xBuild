@@ -7,12 +7,11 @@ import type { NodeWithModifiersType } from '@providers/interfaces/typescript-pro
 /**
  * Imports
  */
-
 import * as ts from 'typescript';
 import { TypesError } from '@errors/types.error';
 import { prefix } from '@components/banner.component';
-import { resolve, relative, dirname, parse, join } from 'path';
 import { Colors, setColor } from '@components/colors.component';
+import { dirname, join, parse, relative, resolve, normalize } from 'path';
 
 /**
  * A record of updater functions that add export modifiers to different TypeScript node types.
@@ -293,7 +292,7 @@ export class TypeScriptProvider {
      */
 
     generateDeclarations(entryPoints: Record<string, string>, noTypeChecker = false, allowError: boolean = false): void {
-        const program = ts.createProgram([ ...this.tsConfig.fileNames,  ...Object.values(entryPoints) ], {
+        const program = ts.createProgram([ ...this.tsConfig.fileNames, ...Object.values(entryPoints) ], {
             ...this.options,
             rootDir: this.options.baseUrl,
             declaration: true,
@@ -490,7 +489,9 @@ export class TypeScriptProvider {
                 if (resolvedTargetFile) {
                     const relativePath = this.getRelativePathToOutDir(sourceFile.fileName, resolvedTargetFile);
 
-                    return this.updateModuleSpecifier(node as ts.Node & { moduleSpecifier: ts.StringLiteral }, relativePath);
+                    return this.updateModuleSpecifier(node as ts.Node & {
+                        moduleSpecifier: ts.StringLiteral
+                    }, relativePath);
                 }
             }
 
@@ -706,7 +707,7 @@ export class TypeScriptProvider {
 
         // Get the node kind name without the "is" prefix
         for (const [ nodeType, updater ] of Object.entries(nodeUpdaters)) {
-            const typeGuardFn = <(node: ts.Node) => boolean> ts[`is${nodeType}` as keyof typeof ts];
+            const typeGuardFn = <(node: ts.Node) => boolean> ts[`is${ nodeType }` as keyof typeof ts];
             if (typeof typeGuardFn === 'function' && typeGuardFn(node)) {
                 return updater(node, newModifiers);
             }
@@ -763,42 +764,34 @@ export class TypeScriptProvider {
     }
 
     /**
-     * Checks if any string in an array contains the specified substring.
+     * Processes top-level TypeScript statements by handling imports, exports, and module declarations
+     * during transformation. This method filters internal imports, removes exports, and flattens module
+     * declarations to generate optimized output.
      *
-     * @param array - The array of strings to search within
-     * @param substring - The substring to search for
-     * @returns True if any string in the array contains the substring, false otherwise
+     * @param node - The TypeScript statement being processed
+     * @param importMap - Collection of import clauses organized by module specifier
+     * @param sourceFiles - Array of internal source file paths that should be excluded
+     * @param context - TypeScript transformation context for node factory operations
+     * @returns Array of transformed statements or empty array if the statement is removed
+     *
+     * @throws TypesError - When encountering unsupported node types
+     *
+     * @remarks
+     * The transformation logic handles several specific cases:
+     * - Import declarations: Collects external imports and filters internal ones
+     * - Import equals declarations: Removes them from output
+     * - Export declarations: Removes them entirely
+     * - Module declarations: Unwraps content from declare modules, preserves others
      *
      * @example
      * ```ts
-     * const fileNames = ['src/main.ts', 'src/utils/helpers.ts'];
-     * const result = arrayContainsStringWithSubstring(fileNames, 'utils/helpers.ts');
-     * // a result would be true
+     * const result = this.visitTopLevelStatement(
+     *   sourceFile.statements[0],
+     *   new Map<string, Array<ts.ImportClause>>(),
+     *   ['./internal-module'],
+     *   transformContext
+     * );
      * ```
-     *
-     * @since 1.5.5
-     */
-
-    private arrayContainsStringWithSubstring(array: string[], substring: string): boolean {
-        return array.some(str => str.includes(substring));
-    }
-
-    /**
-     * Processes a top-level TypeScript statement to handle imports, exports, and module declarations.
-     * This method implements the core transformation logic for each statement in a source file.
-     *
-     * @param node - The TypeScript statement to process
-     * @param externalImports - Array to collect external import declarations
-     * @param context - The transformation context provided by TypeScript
-     * @returns An array of transformed statements (maybe empty if the statement is removed)
-     *
-     * @remarks
-     * The method performs the following operations:
-     * - Collects external imports and removes internal ones
-     * - Removes import equals declarations
-     * - Removes export declarations
-     * - Unrests contents from module declarations with the "declare" keyword
-     * - Processes other statements using the visitNode method
      *
      * @see ts.Statement
      * @see ts.ImportDeclaration
@@ -807,24 +800,24 @@ export class TypeScriptProvider {
      * @since 1.5.5
      */
 
-
     private visitTopLevelStatement(
-        node: ts.Statement, externalImports: ts.ImportDeclaration[], context: ts.TransformationContext
+        node: ts.Statement, importMap: Map<string, Array<ts.ImportClause>>, sourceFiles: Array<string>, context: ts.TransformationContext
     ): ts.Statement[] {
         // Handle imports: collect external ones, remove internal ones
         if (ts.isImportDeclaration(node)) {
             if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
                 const moduleSpecifier = node.moduleSpecifier.text;
 
-                if (!this.arrayContainsStringWithSubstring(this.tsConfig.fileNames, `${moduleSpecifier}.ts`)) {
-                    // Create a new import for external modules
-                    const newImport = ts.factory.createImportDeclaration(
-                        node.modifiers,
-                        node.importClause,
-                        ts.factory.createStringLiteral(moduleSpecifier)
-                    );
+                if(sourceFiles.includes(normalize(moduleSpecifier))) {
+                    return [];
+                }
 
-                    externalImports.push(newImport);
+                if(node.importClause) {
+                    if (!importMap.has(moduleSpecifier)) {
+                        importMap.set(moduleSpecifier, []);
+                    }
+
+                    importMap.get(moduleSpecifier)!.push(node.importClause!);
                 }
             }
 
@@ -848,7 +841,7 @@ export class TypeScriptProvider {
                 // Extract the statements from inside the module
                 if (node.body && ts.isModuleBlock(node.body)) {
                     return node.body.statements.flatMap(stmt =>
-                        this.visitTopLevelStatement(stmt, externalImports, context)
+                        this.visitTopLevelStatement(stmt, importMap, sourceFiles, context)
                     );
                 }
 
@@ -863,22 +856,33 @@ export class TypeScriptProvider {
     }
 
     /**
-     * Processes a TypeScript source file to extract external imports and transform statements.
-     * This method visits each top-level statement in the source file, collecting external imports
-     * and applying transformations as needed.
+     * Transforms a TypeScript source file by processing all its top-level statements and
+     * updating the source file with the processed statements while preserving metadata.
      *
-     * @param sourceFile - The TypeScript source file to process
-     * @param externalImports - Array to collect external import declarations
-     * @param context - The transformation context provided by TypeScript
-     * @returns A transformed TypeScript source file
+     * @param sourceFile - The TypeScript source file to transform
+     * @param importMap - Collection mapping module specifiers to their import clauses
+     * @param sourceFiles - Array of source file paths used to identify internal modules
+     * @param context - The TypeScript transformation context
+     * @returns A new TypeScript source file with transformed statements
      *
      * @remarks
-     * This method maintains all the original source file metadata (like referenced files,
-     * type reference directives, etc.) while updating the statement array with
-     * processed statements.
+     * This method flattens all source file statements by passing them through the
+     * visitTopLevelStatement processor, then creates an updated source file that
+     * preserves all original metadata including declaration status and references.
+     *
+     * @example
+     * ```ts
+     * const transformedFile = this.visitSourceFile(
+     *   program.getSourceFile("main.ts"),
+     *   new Map<string, Array<ts.ImportClause>>(),
+     *   ["./src/internal.ts"],
+     *   transformationContext
+     * );
+     * ```
+     *
+     * @throws TypesError - When transformation encounters incompatible node types
      *
      * @see ts.SourceFile
-     * @see ts.ImportDeclaration
      * @see ts.TransformationContext
      *
      * @since 1.5.5
@@ -886,11 +890,12 @@ export class TypeScriptProvider {
 
     private visitSourceFile(
         sourceFile: ts.SourceFile,
-        externalImports: ts.ImportDeclaration[],
+        importMap: Map<string, Array<ts.ImportClause>>,
+        sourceFiles: Array<string>,
         context: ts.TransformationContext
     ): ts.SourceFile {
         const statements = sourceFile.statements.flatMap(stmt =>
-            this.visitTopLevelStatement(stmt, externalImports, context)
+            this.visitTopLevelStatement(stmt, importMap, sourceFiles, context)
         );
 
         return ts.factory.updateSourceFile(
@@ -901,6 +906,107 @@ export class TypeScriptProvider {
             sourceFile.typeReferenceDirectives,
             sourceFile.hasNoDefaultLib,
             sourceFile.libReferenceDirectives
+        );
+    }
+
+    /**
+     * Merges multiple TypeScript import clauses into a single consolidated import clause,
+     * handling default imports, named imports, and namespace imports.
+     *
+     * @param importClauses - Array of import clauses to merge
+     * @param isTypeOnly - Whether to force the resulting import to be type-only, defaults to true
+     * @returns A consolidated import clause or undefined if no import clauses provided
+     *
+     * @throws TypesError - When encountering incompatible import clause structures
+     *
+     * @remarks
+     * The merging process follows these rules:
+     * - Uses the first default import encountered
+     * - Collects all unique named imports across all clauses
+     * - Uses the first namespace import encountered
+     * - Handles type-only status according to the isTypeOnly parameter or source clauses
+     * - Returns undefined if the input array is empty
+     * - Returns the original clause if there's only one and not forcing type-only
+     *
+     * @example
+     * ```ts
+     * const imports = [
+     *   ts.factory.createImportClause(false, ts.factory.createIdentifier("default1"), undefined),
+     *   ts.factory.createImportClause(
+     *     false,
+     *     undefined,
+     *     ts.factory.createNamedImports([
+     *       ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("named1"))
+     *     ])
+     *   )
+     * ];
+     * const mergedImport = this.mergeImportClauses(imports, true);
+     * ```
+     *
+     * @see ts.ImportClause
+     * @see ts.NamedImports
+     * @see ts.NamespaceImport
+     *
+     * @since 1.5.6
+     */
+
+    private mergeImportClauses(importClauses: ts.ImportClause[], isTypeOnly: boolean = true): ts.ImportClause | undefined {
+        if (importClauses.length === 0) {
+            return undefined;
+        }
+
+        if (importClauses.length === 1 && !isTypeOnly) {
+            return importClauses[0];
+        }
+
+        // Extract all components from import clauses
+        let defaultImport: ts.Identifier | undefined;
+        // If isTypeOnly is true, we force type imports, otherwise we keep original behavior
+        let finalIsTypeOnly = isTypeOnly;
+        if (!isTypeOnly) {
+            finalIsTypeOnly = importClauses.some(clause => clause.isTypeOnly);
+        }
+
+        const namedImportElements = new Map<string, ts.ImportSpecifier>();
+        let namespaceImport: ts.NamespaceImport | undefined;
+
+        // Process each import clause
+        for (const clause of importClauses) {
+            // Handle default import (use the first one found)
+            if (clause.name && !defaultImport) {
+                defaultImport = clause.name;
+            }
+
+            // Handle named imports
+            if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
+                for (const element of clause.namedBindings.elements) {
+                    const elementName = element.name.text;
+                    if (!namedImportElements.has(elementName)) {
+                        namedImportElements.set(elementName, element);
+                    }
+                }
+            }
+
+            // Handle namespace import (use the first one found)
+            if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings) && !namespaceImport) {
+                namespaceImport = clause.namedBindings;
+            }
+        }
+
+        // Create the appropriate namedBindings
+        let namedBindings: ts.NamedImportBindings | undefined;
+
+        if (namedImportElements.size > 0) {
+            namedBindings = ts.factory.createNamedImports(Array.from(namedImportElements.values()));
+        } else if (namespaceImport) {
+            namedBindings = namespaceImport;
+        }
+
+        // Create and return the merged import clause with isTypeOnly flag set
+        return ts.factory.createImportClause(
+            finalIsTypeOnly, // Set to true for type-only imports
+            defaultImport,
+            namedBindings
         );
     }
 
@@ -937,16 +1043,28 @@ export class TypeScriptProvider {
                     throw new Error('Cannot process a single file, expected a bundle');
                 }
 
-                const externalImports: ts.ImportDeclaration[] = [];
+                const importMap: Map<string, Array<ts.ImportClause>> = new Map();
+                const sourceFiles = sourceFile.sourceFiles.map(file => {
+                    const path = parse(relative(this.options.baseUrl ?? '', file.fileName));
+
+                    return normalize(`${ path.dir ? path.dir + '/' : '' }${ path.name }`);
+                });
 
                 // Process each source file
                 const newSourceFiles = sourceFile.sourceFiles.map(file =>
-                    this.visitSourceFile(file, externalImports, context)
+                    this.visitSourceFile(file, importMap, sourceFiles, context)
                 );
 
-                // Create a source file containing just the external imports
+                const importStatements = Array.from(importMap.entries()).map(([ moduleSpecifier, importClauses ]) => {
+                    return ts.factory.createImportDeclaration(
+                        undefined,
+                        this.mergeImportClauses(importClauses),
+                        ts.factory.createStringLiteral(moduleSpecifier)
+                    );
+                });
+
                 const importsFile = ts.factory.createSourceFile(
-                    externalImports,
+                    importStatements,
                     ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
                     ts.NodeFlags.None
                 );

@@ -247,7 +247,7 @@ export class TypeScriptProvider {
 
         Object.entries(entryPoints).forEach(([ output, input ]) => {
             config.outFile = join(this.outDir, output);
-            const program = ts.createProgram([ input ], config);
+            const program = ts.createProgram(this.tsConfig.fileNames.concat(input), config);
 
             const customTransformers: ts.CustomTransformers = {
                 afterDeclarations: [ this.cleanupDeclarations() ]
@@ -277,6 +277,7 @@ export class TypeScriptProvider {
      * output directory. This ensures that the generated declaration files are accurate and the module paths are
      * aligned with the project's build structure.
      *
+     * @param entryPoints - Map of output declaration file paths to their corresponding input source files
      * @param noTypeChecker - Skips TypeScript type checking.
      * @param allowError - A boolean flag indicating whether to throw an error if diagnostics are present. If set to
      * `true`, errors are logged but not thrown, allowing the process to continue. Default to `false`, which throws
@@ -291,8 +292,8 @@ export class TypeScriptProvider {
      * ```
      */
 
-    generateDeclarations(noTypeChecker = false, allowError: boolean = false): void {
-        const program = ts.createProgram(this.tsConfig.fileNames, {
+    generateDeclarations(entryPoints: Record<string, string>, noTypeChecker = false, allowError: boolean = false): void {
+        const program = ts.createProgram([ ...this.tsConfig.fileNames,  ...Object.values(entryPoints) ], {
             ...this.options,
             rootDir: this.options.baseUrl,
             declaration: true,

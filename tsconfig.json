@@ -12,7 +12,7 @@
         "isolatedModules": false,
         "esModuleInterop": false,
         "moduleDetection": "force",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
@@ -45,7 +45,6 @@
         }
     },
     "include": [
-        "src/**/*.ts",
         "includes/**/*.ts"
     ],
     "exclude": [

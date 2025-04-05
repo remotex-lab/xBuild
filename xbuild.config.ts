@@ -17,7 +17,7 @@ import pkg from './package.json' with { type: 'json' };
 
 const config: xBuildConfig[] = [
     {
-        declaration: true,
+        bundleDeclaration: true,
         define: {
             __VERSION: pkg.version
         },

@@ -244,9 +244,14 @@ export class TypeScriptProvider {
             emitDeclarationOnly: true
         };
 
+        let files = this.tsConfig.fileNames;
+        if(!this.tsConfig.raw.include && !this.tsConfig.raw.files) {
+            files = [];
+        }
+
         Object.entries(entryPoints).forEach(([ output, input ]) => {
             config.outFile = join(this.outDir, output);
-            const program = ts.createProgram(this.tsConfig.fileNames.concat(input), config);
+            const program = ts.createProgram(files.concat(input), config);
 
             const customTransformers: ts.CustomTransformers = {
                 afterDeclarations: [ this.cleanupDeclarations() ]

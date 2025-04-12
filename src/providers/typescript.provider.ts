@@ -245,10 +245,20 @@ export class TypeScriptProvider {
         };
 
         let files = this.tsConfig.fileNames;
-        if(!this.tsConfig.raw.include && !this.tsConfig.raw.files) {
+        if (!this.tsConfig.raw.include && !this.tsConfig.raw.files) {
             files = [];
         }
 
+        /**
+         * TODO: Implement improved filtering mechanism to prevent irrelevant declarations
+         * from being inserted into entrypoint declaration bundle files when includes contain
+         * wildcard patterns like '**\/*.ts' or when dealing with multiple EntryPoints.
+         *
+         * This should preserve global declarations in the global scope that don't require
+         * explicit imports.
+         */
+
+        files = files.filter(file => file.endsWith('.d.ts'));
         Object.entries(entryPoints).forEach(([ output, input ]) => {
             config.outFile = join(this.outDir, output);
             const program = ts.createProgram(files.concat(input), config);
@@ -350,7 +360,7 @@ export class TypeScriptProvider {
      */
 
     private hasStringLiteralModuleSpecifier(node: ts.Node): boolean | undefined {
-        return (<ts.ImportDeclaration> node).moduleSpecifier && ts.isStringLiteral((<ts.ImportDeclaration> node).moduleSpecifier);
+        return (<ts.ImportDeclaration>node).moduleSpecifier && ts.isStringLiteral((<ts.ImportDeclaration>node).moduleSpecifier);
     }
 
     /**
@@ -488,7 +498,7 @@ export class TypeScriptProvider {
         const visitNode = (node: ts.Node | ts.ImportDeclaration | ts.ExportDeclaration): ts.Node => {
             // Example transformation: replace import/export module specifiers with relative paths
             if (this.isImportOrExportDeclaration(node) && this.hasStringLiteralModuleSpecifier(node)) {
-                const specifierText = ((<ts.ImportDeclaration> node).moduleSpecifier as ts.StringLiteral).text;
+                const specifierText = ((<ts.ImportDeclaration>node).moduleSpecifier as ts.StringLiteral).text;
                 const resolvedTargetFile = this.resolveModuleFileName(specifierText, this.options);
 
                 if (resolvedTargetFile) {
@@ -708,11 +718,11 @@ export class TypeScriptProvider {
      */
 
     private updateNodeWithoutExports(node: NodeWithModifiersType): ts.Node {
-        const newModifiers = this.removeExportModifiers(<readonly ts.Modifier[] | undefined> node.modifiers);
+        const newModifiers = this.removeExportModifiers(<readonly ts.Modifier[] | undefined>node.modifiers);
 
         // Get the node kind name without the "is" prefix
         for (const [ nodeType, updater ] of Object.entries(nodeUpdaters)) {
-            const typeGuardFn = <(node: ts.Node) => boolean> ts[`is${ nodeType }` as keyof typeof ts];
+            const typeGuardFn = <(node: ts.Node) => boolean>ts[`is${ nodeType }` as keyof typeof ts];
             if (typeof typeGuardFn === 'function' && typeGuardFn(node)) {
                 return updater(node, newModifiers);
             }
@@ -813,11 +823,11 @@ export class TypeScriptProvider {
             if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
                 const moduleSpecifier = node.moduleSpecifier.text;
 
-                if(sourceFiles.includes(normalize(moduleSpecifier))) {
+                if (sourceFiles.includes(normalize(moduleSpecifier))) {
                     return [];
                 }
 
-                if(node.importClause) {
+                if (node.importClause) {
                     if (!importMap.has(moduleSpecifier)) {
                         importMap.set(moduleSpecifier, []);
                     }
